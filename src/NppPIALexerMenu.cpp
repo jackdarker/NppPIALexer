@@ -12,9 +12,22 @@ extern CNppPIALexerOptions g_opt;
 FuncItem CNppPIALexerMenu::arrFuncItems[N_NBFUNCITEMS] = {
     { _T("Autocomplete brackets"), funcAutocomplete, 0, false, NULL },
     { _T("Settings..."),           funcSettings,     0, false, NULL },
+	{ _T("GOTO DLg"),           funcDockableDlgDemo,     0, false, NULL },
     { _T(""),                      NULL,             0, false, NULL }, // separator
     { _T("About"),                 funcAbout,        0, false, NULL }
 };
+
+
+// Dockable Dialog Demo
+// 
+// This demonstration shows you how to do a dockable dialog.
+// You can create your own non dockable dialog - in this case you don't nedd this demonstration.
+// You have to create your dialog by inherented DockingDlgInterface class in order to make your dialog dockable
+// - please see DemoDlg.h and DemoDlg.cpp to have more informations.
+void CNppPIALexerMenu::funcDockableDlgDemo()
+{
+	thePlugin.DockableDlgDemo();
+}
 
 void CNppPIALexerMenu::funcAutocomplete()
 {

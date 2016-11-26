@@ -1,5 +1,5 @@
 #include "SciMessager.h"
-
+//see http://www.scintilla.org/ScintillaDoc.html
 CSciMessager::CSciMessager(HWND hSciWnd )
 {
     m_hSciWnd = hSciWnd;

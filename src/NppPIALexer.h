@@ -4,6 +4,7 @@
 #include "core/NppPlugin.h"
 #include "NppPIALexerMenu.h"
 #include "Model.h"
+#include "GoToLineDlg.h"
 
 class CNppPIALexer : public CNppPlugin
 {
@@ -39,7 +40,7 @@ class CNppPIALexer : public CNppPlugin
     protected:
         // plugin menu
         CNppPIALexerMenu m_PluginMenu;
-        
+        DemoDlg _goToLine;
         // internal vars
         int  m_nAutoRightBracketPos;
         int  m_nFileType;
@@ -65,6 +66,7 @@ class CNppPIALexer : public CNppPlugin
         void OnNppReady();
         void OnNppShutdown();
         void OnNppMacro(int nMacroState);
+		void DockableDlgDemo();
 
         // custom scintilla notifications
         void OnSciCharAdded(const int ch);

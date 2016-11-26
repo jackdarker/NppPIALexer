@@ -3,12 +3,14 @@
 #include "core/npp_stuff/resource.h"
 
 
+
 // can be _T(x), but _T(x) may be incompatible with ANSI mode
 #define _TCH(x)  (x)
 
 
 extern CNppPIALexer thePlugin;
 CNppPIALexerOptions g_opt;
+
 
 const TCHAR* CNppPIALexer::PLUGIN_NAME = _T("NppPIALexer");
 const char* CNppPIALexer::strBrackets[tbtCount - 1] = {
@@ -34,6 +36,28 @@ WNDPROC CNppPIALexer::nppOriginalWndProc = NULL;
 #define MACRO_USER                     (WM_USER + 4000)
 #define WM_MACRODLGRUNMACRO            (MACRO_USER + 02)
 */
+
+void CNppPIALexer::DockableDlgDemo()
+{
+	_goToLine.setParent(m_nppMsgr.getNppWnd());
+	tTbData	data = {0};
+
+	if (!_goToLine.isCreated())
+	{
+		_goToLine.create(&data);
+
+		// define the default docking behaviour
+		data.uMask = DWS_DF_CONT_RIGHT;
+
+		data.pszModuleName = thePlugin.getDllFileName();//_goToLine.getPluginFileName();
+
+		// the dlgDlg should be the index of funcItem where the current function pointer is
+		// in this case is DOCKABLE_DEMO_INDEX
+		data.dlgID = CNppPIALexerMenu::N_GOTO;
+		::SendMessage(m_nppMsgr.getNppWnd(), NPPM_DMMREGASDCKDLG, 0, (LPARAM)&data);
+	}
+	_goToLine.display();
+}
 
 LRESULT CNppPIALexer::nppCallWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -203,6 +227,8 @@ void CNppPIALexer::OnNppReady()
         nppOriginalWndProc = (WNDPROC) SetWindowLongPtrA( 
           m_nppMsgr.getNppWnd(), GWLP_WNDPROC, (LONG_PTR) nppNewWndProc );
     }
+		// Initialize dockable demo dialog
+	_goToLine.init((HINSTANCE) thePlugin.getDllModule(), NULL);
 }
 
 void CNppPIALexer::OnNppShutdown()

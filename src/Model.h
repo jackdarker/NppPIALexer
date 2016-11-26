@@ -16,13 +16,21 @@ class Model
         Model();
         ~Model();
 
-		//Loads Data from Database; if there is none, rebuild is called
+		//Loads Data from Database; if there is none, rebuildObjList is called
 		int LoadIntelisense(char * ProjectPath) {return 0;};
 		//new database is created and filled with parsed data from source, also rebuild ObjList
+		
+
+		//if there is no Database new one is created
+		//parses all SEQ for Obj-definitions and in-sequence-functions of the current working directory
+		//calls RebuildIntelisense 
+		int RebuildObjList() {return 0;};
+
+		//search for data for Obj-definitions in Objects and function-declaration in seq
 		int RebuildIntelisense(char * ProjectPath) {return 0;};
 
-		//parses all SEQ for Obj-definitions and in-sequence-functions
-		int RebuildObjList() {return 0;};
+		//setup a projectdatabase for intelisense; if there is one it will be overwritten
+		int InitDatabase() {return 0;};
 
 		//gets a list of possible autocompletion candidates for Objects/in-sequence-functions
 		// Scope is the actual SEQ

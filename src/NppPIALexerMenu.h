@@ -9,6 +9,7 @@ class CNppPIALexerMenu : public CNppPluginMenu
         enum NMenuItems {
             N_AUTOCOMPLETE = 0,
             N_SETTINGS,
+			N_GOTO,
             N_SEPARATOR1,
             N_ABOUT,
             
@@ -23,6 +24,7 @@ class CNppPIALexerMenu : public CNppPluginMenu
         static void    funcAutocomplete();
         static void    funcSettings();
         static void    funcAbout();
+		static void		funcDockableDlgDemo();
         
 };
 

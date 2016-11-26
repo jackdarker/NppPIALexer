@@ -147,6 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\GoToLineDlg.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\core\NppMessager.cpp" />
     <ClCompile Include="src\core\NppPlugin.cpp" />
@@ -157,12 +158,17 @@
     <ClCompile Include="src\NppPIALexer.cpp" />
     <ClCompile Include="src\NppPIALexerMenu.cpp" />
     <ClCompile Include="src\NppPIALexerOptions.cpp" />
+    <ClCompile Include="src\StaticDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\base.h" />
     <ClInclude Include="src\core\NppMessager.h" />
     <ClInclude Include="src\core\NppPlugin.h" />
     <ClInclude Include="src\core\NppPluginMenu.h" />
+    <ClInclude Include="src\Docking.h" />
+    <ClInclude Include="src\DockingDlgInterface.h" />
+    <ClInclude Include="src\dockingResource.h" />
+    <ClInclude Include="src\GoToLineDlg.h" />
     <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\core\SciMessager.h" />
@@ -170,8 +176,11 @@
     <ClInclude Include="src\NppPIALexer.h" />
     <ClInclude Include="src\NppPIALexerMenu.h" />
     <ClInclude Include="src\NppPIALexerOptions.h" />
+    <ClInclude Include="src\StaticDialog.h" />
+    <ClInclude Include="src\Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="src\goLine.rc" />
     <ResourceCompile Include="src\NppPIALexer.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

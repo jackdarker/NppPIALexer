@@ -3,6 +3,7 @@
 //----------------------------------------------------------------------------
 
 #include <windows.h>
+#include <shlwapi.h>
 #include <TCHAR.h>
 #include <stdio.h>
 #include <ios>
