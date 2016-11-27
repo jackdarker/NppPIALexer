@@ -40,7 +40,7 @@ class CNppPIALexer : public CNppPlugin
     protected:
         // plugin menu
         CNppPIALexerMenu m_PluginMenu;
-        DemoDlg _goToLine;
+        DemoDlg m_DockDlg;
         // internal vars
         int  m_nAutoRightBracketPos;
         int  m_nFileType;
@@ -74,6 +74,8 @@ class CNppPIALexer : public CNppPlugin
         // custom functions
         void ReadOptions();
         void SaveOptions();
+
+		void ReloadData(const TCHAR*  ProjectPath);
 
     protected:
         // custom functions

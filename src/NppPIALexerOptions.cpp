@@ -176,6 +176,11 @@ void CNppPIALexerOptions::ReadOptions(const TCHAR* szIniFilePath)
         ::CharLower(szTempExts);
         m_sFileExtsRule = &szTempExts[i];
     }
+
+	TCHAR _temp[MAX_PATH];
+	::GetPrivateProfileString( _T("Last"), _T("Project"), 
+        m_LastProject.c_str(), _temp, MAX_PATH, szIniFilePath );
+    m_LastProject.assign(_temp );
 }
 
 void CNppPIALexerOptions::SaveOptions(const TCHAR* szIniFilePath)
@@ -195,4 +200,6 @@ void CNppPIALexerOptions::SaveOptions(const TCHAR* szIniFilePath)
         if ( ::WritePrivateProfileString(_T("Options"), _T("FileExtsRule"), m_sFileExtsRule.c_str(), szIniFilePath) )
             m_bSaveFileExtsRule = false;
     }
+	if ( ::WritePrivateProfileString(_T("Last"), _T("Project"), m_LastProject.c_str(), szIniFilePath) )
+        m_LastProject0 = m_LastProject;
 }

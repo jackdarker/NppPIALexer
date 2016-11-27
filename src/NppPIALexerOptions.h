@@ -27,6 +27,8 @@ class CNppPIALexerOptions
             STR_FILEEXTS_SIZE   = 500
         };
 
+		std::wstring m_LastProject;
+
         bool  m_bBracketsAutoComplete;
         bool  m_bBracketsRightExistsOK;
         bool  m_bBracketsDoSingleQuote;
@@ -51,6 +53,7 @@ class CNppPIALexerOptions
         UINT  m_uFlags;
         UINT  m_uFlags0;
         bool  m_bSaveFileExtsRule;
+		std::wstring m_LastProject0;
         TCHAR m_szHtmlFileExts0[STR_FILEEXTS_SIZE];
 };
 

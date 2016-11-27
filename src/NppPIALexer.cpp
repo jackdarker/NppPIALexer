@@ -39,13 +39,13 @@ WNDPROC CNppPIALexer::nppOriginalWndProc = NULL;
 
 void CNppPIALexer::DockableDlgDemo()
 {
-	_goToLine.setParent(m_nppMsgr.getNppWnd());
+	m_DockDlg.setParent(m_nppMsgr.getNppWnd());
 	tTbData	data = {0};
 
-	if (!_goToLine.isCreated())
+	if (!m_DockDlg.isCreated())
 	{
-		_goToLine.create(&data);
-
+		m_DockDlg.create(&data);
+		
 		// define the default docking behaviour
 		data.uMask = DWS_DF_CONT_RIGHT;
 
@@ -56,7 +56,7 @@ void CNppPIALexer::DockableDlgDemo()
 		data.dlgID = CNppPIALexerMenu::N_GOTO;
 		::SendMessage(m_nppMsgr.getNppWnd(), NPPM_DMMREGASDCKDLG, 0, (LPARAM)&data);
 	}
-	_goToLine.display();
+	m_DockDlg.display();
 }
 
 LRESULT CNppPIALexer::nppCallWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -112,7 +112,7 @@ LRESULT CALLBACK CNppPIALexer::nppNewWndProc(HWND hWnd, UINT uMsg, WPARAM wParam
         thePlugin.OnNppMacro(MACRO_STOP);
         return lResult;
     }
-
+	
     return nppCallWndProc(hWnd, uMsg, wParam, lParam);
 }
 
@@ -228,7 +228,7 @@ void CNppPIALexer::OnNppReady()
           m_nppMsgr.getNppWnd(), GWLP_WNDPROC, (LONG_PTR) nppNewWndProc );
     }
 		// Initialize dockable demo dialog
-	_goToLine.init((HINSTANCE) thePlugin.getDllModule(), NULL);
+	m_DockDlg.init((HINSTANCE) thePlugin.getDllModule(), NULL);
 }
 
 void CNppPIALexer::OnNppShutdown()
@@ -488,6 +488,20 @@ void CNppPIALexer::SaveOptions()
         
         g_opt.SaveOptions(szPath);
     }
+}
+void CNppPIALexer::ReloadData(const TCHAR*  ProjectPath)
+{
+	m_DockDlg.PrintLog(_T("Loading..."));
+	m_DockDlg.PrintLog(ProjectPath);
+	int RC = m_Model->LoadIntelisense(ProjectPath);
+	if (RC !=0) {
+		m_DockDlg.PrintLog(_T("Loading failed"));
+	}
+	else {
+		m_DockDlg.PrintLog(_T("Loading sucessful"));
+		g_opt.m_LastProject=ProjectPath;
+		SaveOptions();
+	}
 }
 
 void CNppPIALexer::UpdateFileType() // <-- call it when the plugin becomes active!!!
