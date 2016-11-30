@@ -147,6 +147,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\core\shell.c" />
+    <ClCompile Include="src\core\sqlite3.c" />
     <ClCompile Include="src\GoToLineDlg.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\core\NppMessager.cpp" />
@@ -165,6 +167,8 @@
     <ClInclude Include="src\core\NppMessager.h" />
     <ClInclude Include="src\core\NppPlugin.h" />
     <ClInclude Include="src\core\NppPluginMenu.h" />
+    <ClInclude Include="src\core\sqlite3.h" />
+    <ClInclude Include="src\core\sqlite3ext.h" />
     <ClInclude Include="src\Docking.h" />
     <ClInclude Include="src\DockingDlgInterface.h" />
     <ClInclude Include="src\dockingResource.h" />

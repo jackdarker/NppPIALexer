@@ -1,6 +1,7 @@
 #ifndef _NppPIALexer_model_h_
 #define _NppPIALexer_model_h_
 //---------------------------------------------------------------------------
+
 #include "core/base.h"
 #include "core/sqlite3.h"
 
@@ -17,7 +18,7 @@ class Model
         ~Model();
 
 		//Loads Data from Database; if there is none, rebuildObjList is called
-		int LoadIntelisense(const TCHAR*  ProjectPath) {return 0;};
+		int LoadIntelisense(const TCHAR*  ProjectPath) ;
 		//new database is created and filled with parsed data from source, also rebuild ObjList
 		
 
@@ -30,7 +31,7 @@ class Model
 		int RebuildIntelisense(const TCHAR*  ProjectPath) {return 0;};
 
 		//setup a projectdatabase for intelisense; if there is one it will be overwritten
-		int InitDatabase() {return 0;};
+		int InitDatabase() ;
 
 		//gets a list of possible autocompletion candidates for Objects/in-sequence-functions
 		// Scope is the actual SEQ
@@ -38,6 +39,9 @@ class Model
 		//gets a list of possible autocompletion candidates for object-functions
 		// Scope is the actual Objectname
 		int GetFunction(const TCHAR* BeginsWith, const TCHAR* Scope, const TCHAR*  Object ,const TCHAR* Result ){ return 0;};
+	private: 
+		void HandleDBError() ;
+
 };
 
 //----------------------------------------------------------------------------
