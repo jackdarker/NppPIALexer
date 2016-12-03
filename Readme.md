@@ -2,6 +2,11 @@
 * NppPIALexer-Plugin for Notepad++ 5.9 (and above)
 * by JK, 20016..
 ***********************************************
+Links:
+http://www.sqlite.org
+https://www.tutorialspoint.com/sqlite/sqlite_data_types.htm
+
+
 1) Tool um aus Objects\xyz\doc\help.txt  eine SQLlite-Datenbasis zu erstellen
 
 2) Plugin parst \Seq\StandardObj.seq usw. nach using ... um Objekte und deren Klassen zu kennen
@@ -30,4 +35,4 @@
 ***************************************
 2016.11.06	JKubik
 - created based on XBrackets Lite Plugin source
-# NppPIALexer
+

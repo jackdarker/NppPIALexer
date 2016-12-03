@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\GoToLineDlg.cpp" />
+    <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\core\NppMessager.cpp" />
+    <ClCompile Include="src\core\NppPlugin.cpp" />
+    <ClCompile Include="src\core\NppPluginMenu.cpp" />
+    <ClCompile Include="src\Model.cpp" />
+    <ClCompile Include="src\SettingsDlg.cpp" />
+    <ClCompile Include="src\NppPIALexer.cpp" />
+    <ClCompile Include="src\NppPIALexerMenu.cpp" />
+    <ClCompile Include="src\NppPIALexerOptions.cpp" />
+    <ClCompile Include="src\core\SciMessager.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\shell.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\sqlite3.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StaticDialog.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\core\base.h" />
+    <ClInclude Include="src\core\NppMessager.h" />
+    <ClInclude Include="src\core\NppPlugin.h" />
+    <ClInclude Include="src\core\NppPluginMenu.h" />
+    <ClInclude Include="src\Docking.h" />
+    <ClInclude Include="src\DockingDlgInterface.h" />
+    <ClInclude Include="src\dockingResource.h" />
+    <ClInclude Include="src\GoToLineDlg.h" />
+    <ClInclude Include="src\Model.h" />
+    <ClInclude Include="src\resource.h" />
+    <ClInclude Include="src\SettingsDlg.h" />
+    <ClInclude Include="src\NppPIALexer.h" />
+    <ClInclude Include="src\NppPIALexerMenu.h" />
+    <ClInclude Include="src\NppPIALexerOptions.h" />
+    <ClInclude Include="src\core\SciMessager.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\sqlite3.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\sqlite3ext.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Window.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\StaticDialog.h">
+      <Filter>core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\goLine.rc" />
+    <ResourceCompile Include="src\NppPIALexer.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="core">
+      <UniqueIdentifier>{905aa4e5-d6bf-4b1f-9ed3-1c0942ad5c28}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

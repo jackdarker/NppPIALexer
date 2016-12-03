@@ -1,0 +1,39 @@
+Intelisense wird in SQLite3 db gespeichert
+
+Erzeugen der Intelisense:
+1) parsen von allen Sequenzen nach "include" und "using" und erzeugen Object-ObjectDecl-Baum
+2) parsen aller sequenzen nach "function" und ergänzen von ObjectDecl
+3) einbinden der Commander-Funktionen entsprechend gefundener using-Verweise und ergänzen von ObjectDecl
+4) das ganze wiederholen wenn Dateien geladen/gespeichert werden
+
+Tabelle ObjectList 
+ID		INT PRIMARY KEY     AUTOINCREMENT
+Scope		TEXT		
+Object		TEXT
+IDObjectDecl	INT	NOT NULL
+
+Tabelle ObjectDecl
+ID		INT PRIMARY KEY     AUTOINCREMENT
+ClassID		TEXT    NOT NULL
+Function	TEXT    NOT NULL
+ParameterList	TEXT    
+ReturnList	TEXT    
+Descr		TEXT
+
+z.B. ObjectList
+Scope		Object	ClassID		
+---------------------------------------------------------------------------
+Main.seq	Calc	Calculator			<= Definition Objekt-Klasse
+Main.seq		Functions.seq			<= Funktion in include-sequenz
+Functions.seq		Functions.seq			<= Funktion in dieser sequenz
+Main.seq		Main.seq
+
+ObjectDecl
+ClassID		Function	ParameterList		ReturnList		Descr
+---------------------------------------------------------------------------
+Calculator	boolAnd		(bool A,bool B)		-> bool X		x = A & B
+Calculator	floatEquals	(float A, float B)	-> bool X
+Preh_Trace	CheckSNState	(string SN, string Type, int AssyLoc=0)	-> bool OK ,[string ACK]
+Functions.seq	Homing					-> bool OK, string Text
+Functions.seq	CloseDoor				-> bool OK
+Main.seq	Main

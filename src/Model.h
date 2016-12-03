@@ -35,7 +35,7 @@ class Model
 
 		//gets a list of possible autocompletion candidates for Objects/in-sequence-functions
 		// Scope is the actual SEQ
-		int GetObject(const TCHAR* BeginsWith, const TCHAR* Scope, const TCHAR* Result ) {return 0;};
+		int GetObject(const TCHAR* BeginsWith, const TCHAR* Scope, TCHAR* Result );
 		//gets a list of possible autocompletion candidates for object-functions
 		// Scope is the actual Objectname
 		int GetFunction(const TCHAR* BeginsWith, const TCHAR* Scope, const TCHAR*  Object ,const TCHAR* Result ){ return 0;};
