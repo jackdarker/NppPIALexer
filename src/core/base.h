@@ -8,10 +8,15 @@
 #include <stdio.h>
 #include <ios>
 #include <iostream>
+#include <fstream>
+#include <time.h>
 #include <stdlib.h>
 #include <string.h>
 #include <search.h>
 
+
+typedef std::basic_string<TCHAR> tstr;
+typedef std::basic_string<char> str;
 //----------------------------------------------------------------------------
 #endif
 

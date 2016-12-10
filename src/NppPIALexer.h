@@ -1,6 +1,7 @@
 #ifndef _NppPIALexer_npp_plugin_h_
 #define _NppPIALexer_npp_plugin_h_
 //---------------------------------------------------------------------------
+#include "core/base.h"
 #include "core/NppPlugin.h"
 #include "NppPIALexerMenu.h"
 #include "Model.h"
@@ -74,7 +75,8 @@ class CNppPIALexer : public CNppPlugin
         // custom functions
         void ReadOptions();
         void SaveOptions();
-
+		void Log(const TCHAR* log);
+		void Log(const char* log);
 		void ReloadData(const TCHAR*  ProjectPath);
 
     protected:
@@ -92,6 +94,7 @@ class CNppPIALexer : public CNppPlugin
         
         static bool    isNppMacroStarted;
         static bool    isNppWndUnicode;
+		std::wofstream*  m_Log;
         static WNDPROC nppOriginalWndProc;
         static LRESULT nppCallWndProc(HWND, UINT, WPARAM, LPARAM);
         static LRESULT CALLBACK nppNewWndProc(HWND, UINT, WPARAM, LPARAM);

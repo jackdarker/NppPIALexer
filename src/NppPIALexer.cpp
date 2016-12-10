@@ -121,14 +121,38 @@ CNppPIALexer::CNppPIALexer()
     m_nAutoRightBracketPos = -1;
     m_nFileType = tftNone;
     m_bSupportedFileType = true;
+	m_Log = new std::wofstream; // On the heap
+	m_Log->open( "NppPIALexer.log",std::ios_base::out | std::ios_base::ate,_SH_DENYWR ); //out-stream adding at eof
 	m_Model = new Model();
 }
 
 CNppPIALexer::~CNppPIALexer()
 {
 	if(m_Model) delete m_Model;
+	if (m_Log) { 
+		m_Log->close();
+		delete m_Log;
+		m_Log=NULL;
+	}
 }
+void CNppPIALexer::Log(const TCHAR* log){
+	m_DockDlg.PrintLog(log);
+	if(!m_Log) return;
+	struct tm today = { 1, 1, 1, 1, 1, 1 };
+	time_t ltime;
+	time( &ltime );
+	_localtime64_s( &today, &ltime );  
+	TCHAR _Ttime[128];
+	wcsftime( _Ttime, 128, _T("%c   "), &today );
+	*m_Log<<_Ttime<<log<<std::endl;
 
+}
+void CNppPIALexer::Log(const char* log){
+	TCHAR _Tlog[2*MAX_PATH + 1]=_T("");
+	int size_needed = MultiByteToWideChar(CP_UTF8, 0, log, (int)strlen(log), NULL, 0);
+	MultiByteToWideChar(CP_UTF8, 0, log, (int)strlen(log), _Tlog, size_needed);
+	Log(_Tlog);
+}
 FuncItem* CNppPIALexer::nppGetFuncsArray(int* pnbFuncItems)
 {
     *pnbFuncItems = CNppPIALexerMenu::N_NBFUNCITEMS;
@@ -309,7 +333,6 @@ void CNppPIALexer::OnNppMacro(int nMacroState)
 	}
 	return true;
 }*/
-
 
 char words[255]="";
 char *strAC;

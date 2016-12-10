@@ -9,6 +9,34 @@
 
 class Model
 {
+	class Obj {
+	public:
+		Obj(str scope,str name, int classID) {
+			m_ID=0;
+			m_Scope=scope;
+			m_Name=name;
+			m_ClassID=classID;
+		};
+		~Obj(){};
+		int ID() {return m_ID;}
+		void updateID(int iD) {m_ID=iD;}
+		str Name(){return m_Name;}
+		str Scope(){return m_Scope;}
+		int ClassID(){return m_ClassID;}
+	private:
+		int m_ID;
+		str m_Scope;
+		str m_Name;
+		int m_ClassID;
+	};
+	class ObjDecl {
+		int m_ID;
+		str m_Function;
+		str m_Params;
+		str m_Returns;
+		int m_ClassID;
+	};
+
     protected:
 		sqlite3 *db;
 		int LastError;
@@ -40,6 +68,8 @@ class Model
 		// Scope is the actual Objectname
 		int GetFunction(const TCHAR* BeginsWith, const TCHAR* Scope, const TCHAR*  Object ,const TCHAR* Result ){ return 0;};
 	private: 
+		int UpdateObjList(Obj& theObj );
+		int RefreshObjListID(Obj& theObj);
 		void HandleDBError() ;
 
 };

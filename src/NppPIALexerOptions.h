@@ -4,7 +4,7 @@
 #include "core/base.h"
 #include <string>
 
-typedef std::basic_string<TCHAR> tstr;
+
 
 class CNppPIALexerOptions
 {
