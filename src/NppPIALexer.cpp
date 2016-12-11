@@ -1,5 +1,6 @@
 #include "NppPIALexer.h"
 #include "NppPIALexerOptions.h"
+#include "core/WcharMbcsConverter.h"
 #include "core/npp_stuff/resource.h"
 
 
@@ -124,11 +125,19 @@ CNppPIALexer::CNppPIALexer()
 	m_Log = new std::wofstream; // On the heap
 	m_Log->open( "NppPIALexer.log",std::ios_base::out | std::ios_base::ate,_SH_DENYWR ); //out-stream adding at eof
 	m_Model = new Model();
+	m_File = new tstr();
+	m_Scope = new tstr();
+	m_Search = new tstr();
+	m_Found = new tstr();
 }
 
 CNppPIALexer::~CNppPIALexer()
 {
 	if(m_Model) delete m_Model;
+	if(m_File) delete m_File;
+	if(m_Scope) delete m_Scope;
+	if(m_Search) delete m_Search;
+	if(m_Found) delete m_Found;
 	if (m_Log) { 
 		m_Log->close();
 		delete m_Log;
@@ -273,7 +282,6 @@ void CNppPIALexer::OnNppShutdown()
 
     SaveOptions();
 }
-
 void CNppPIALexer::OnNppMacro(int nMacroState)
 {
     static int nPrevAutoComplete = -1; // uninitialized
@@ -352,8 +360,11 @@ char* GetNearestWords(char *root, int rootlength) {
 	return words;
 }
 //Resets state of Autocomplete-Tracker
-void ResetAC() {
-	_strset_s(word,_countof(word),0);
+void CNppPIALexer::ResetAutoComplete() {
+	//_strset_s(word,_countof(word),0);
+	m_File->assign(_T("Main.seq"));
+	m_Search->assign(_T(""));
+	m_Found->assign(_T(""));
 }
 
 void CNppPIALexer::OnSciCharAdded(const int ch)
@@ -374,14 +385,23 @@ void CNppPIALexer::OnSciCharAdded(const int ch)
     {
 		case _TCH('.') :
 		case _TCH('(') :
-            ResetAC();
+		case _TCH(' ') :
+            ResetAutoComplete();
             break;
 		default:
-			_strset_s(newword,_countof(newword),(char)ch);
-			strncat_s(word, MaxWordLength, newword, _TRUNCATE);
-			length =strnlen_s(word,_countof(word));
-			strAC = GetNearestWords(word,length );
-			LRESULT x=sciMsgr.SendSciMsg(SCI_AUTOCSHOW,(WPARAM) length, (LPARAM) strAC);
+			
+			//_strset_s(newword,_countof(newword),(char)ch);
+			//strncat_s(word, MaxWordLength, newword, _TRUNCATE);
+			//length =strnlen_s(word,_countof(word));
+			//strAC = GetNearestWords(word,length );
+			wchar_t y=WcharMbcsConverter::char2wchar((char)ch);
+			
+			m_Search->append(&y,1); 
+			m_Model->GetObject(m_Search,m_File,m_Found);
+			std::vector<char> utf8buf =WcharMbcsConverter::tchar2char(m_Found->c_str());
+			//LRESULT x=sciMsgr.SendSciMsg(SCI_AUTOCSHOW,(WPARAM) length, (LPARAM) strAC);
+			if(utf8buf.size()>0) 
+				LRESULT x=sciMsgr.SendSciMsg(SCI_AUTOCSHOW,(WPARAM) length,(LPARAM)&utf8buf[0]);
 			break;
 
 	}

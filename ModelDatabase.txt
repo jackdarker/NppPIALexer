@@ -15,6 +15,7 @@ IDObjectDecl	INT	NOT NULL
 Tabelle ObjectDecl
 ID		INT PRIMARY KEY     AUTOINCREMENT
 ClassID		TEXT    NOT NULL
+ClassType	INT	NOT NULL
 Function	TEXT    NOT NULL
 ParameterList	TEXT    
 ReturnList	TEXT    
@@ -22,18 +23,46 @@ Descr		TEXT
 
 z.B. ObjectList
 Scope		Object	ClassID		
----------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
 Main.seq	Calc	Calculator			<= Definition Objekt-Klasse
 Main.seq		Functions.seq			<= Funktion in include-sequenz
 Functions.seq		Functions.seq			<= Funktion in dieser sequenz
 Main.seq		Main.seq
+Main.seq	bOK	bool				<= Variable in dieser Sequenz (global)
+Main.seq::Main	sText	string				<= Variable in dieser Funktion (lokal)
 
 ObjectDecl
-ClassID		Function	ParameterList		ReturnList		Descr
----------------------------------------------------------------------------
-Calculator	boolAnd		(bool A,bool B)		-> bool X		x = A & B
-Calculator	floatEquals	(float A, float B)	-> bool X
-Preh_Trace	CheckSNState	(string SN, string Type, int AssyLoc=0)	-> bool OK ,[string ACK]
-Functions.seq	Homing					-> bool OK, string Text
-Functions.seq	CloseDoor				-> bool OK
-Main.seq	Main
+ClassID		ClassType	Function	ParameterList		ReturnList		Descr
+---------------------------------------------------------------------------------------------------------------------------------
+Calculator	Class		boolAnd		(bool A,bool B)		-> bool X		x = A & B
+Calculator	Class		floatEquals	(float A, float B)	-> bool X
+Preh_Trace	Class		CheckSNState	(string SN,string Type)	-> bool OK ,[string ACK]
+Functions.seq	Seq		Homing					-> bool OK, string Text
+Functions.seq	Seq		CloseDoor	(bool bClose)		-> bool OK
+Main.seq	Seq		Main
+bool		Typ
+string		Typ
+
+Abrufen von Intelisense:
+1) der Lexer erkennt welches Sequenzfile bearbeitet wird 
+2) bei Eingabe von "." oder " " oder "(" oder "->" startet der Lexer; nach 2-3 Zeichen Vorschlagliste einblenden
+	(in Functions.seq eintippen) "Calc.bo"
+3) Nachschlagen: Scope=Functions.seq::CloseDoor	Obj=Calc Search=bo Typ=Class (weil ".")
+	gibt es ein Objekt Calc im Scope Functions.seq::CloseDoor oder Functions.seq?
+	ist es vom Typ Class?
+	welche Function fängt mit "bo" an?
+
+Project
+|-->Main.seq
+	|--> Calculator Calc	(by using)
+	|--> bool bOK
+	|--> Main
+		|--> string sText
+	|--> Functions.seq	(by include)
+		|--> CloseDoor
+
+|-->Tools.seq
+	|--> Functions.seq	(by include)
+		|--> CloseDoor
+
+		

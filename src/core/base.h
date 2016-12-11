@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <shlwapi.h>
 #include <TCHAR.h>
+#include <vector>
 #include <stdio.h>
 #include <ios>
 #include <iostream>

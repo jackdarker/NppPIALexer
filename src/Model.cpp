@@ -2,6 +2,7 @@
 #include "Model.h"
 #include "NppPIALexer.h"
 #include "NppPIALexerOptions.h"
+#include "core/WcharMbcsConverter.h"
 
 extern CNppPIALexer thePlugin;
 //??Todo using sqlite with UTF8, should switch to UTF16 since UNICODE is declared? 
@@ -11,6 +12,7 @@ Model::Model(){
 }
 
 Model::~Model(){
+	if(db) sqlite3_close(db);
 	thePlugin.Log(_T("model destructor"));
 }
 void Model::HandleDBError() {
@@ -28,15 +30,16 @@ void Model::HandleDBError() {
    printf("\n");
    return 0;
 }*/
-int Model::GetObject(const TCHAR* BeginsWith, const TCHAR* Scope, TCHAR* Result ) {
+int Model::GetObject(const tstr* BeginsWith, const tstr* Scope, tstr* Result ) {
 	char *error=0;
 	tstr _SQL(_T("SELECT Object from ObjectList where Scope=='"));
-	_SQL+=tstr(Scope)+_T("' AND Object Like('")+tstr(BeginsWith)+_T("%');");
+	_SQL+=(*Scope)+_T("' AND Object Like('")+(*BeginsWith)+_T("%');");
 	sqlite3_stmt *res;
 	char _sql[MAX_PATH];
 	WideCharToMultiByte(CP_ACP, 0, _SQL.c_str(),_SQL.size()+1, _sql , MAX_PATH, NULL, NULL);
 	int rc = sqlite3_prepare(db,_sql, -1, &res, 0);       
     if (rc != SQLITE_OK) {      
+		thePlugin.Log(_sql);
 		thePlugin.Log(_T("Failed to fetch data")); 
 		thePlugin.Log(sqlite3_errmsg(db));
         return 1;
@@ -49,9 +52,11 @@ int Model::GetObject(const TCHAR* BeginsWith, const TCHAR* Scope, TCHAR* Result 
 		rc = sqlite3_step(res);
     }
     sqlite3_finalize(res);
-	int size_needed = MultiByteToWideChar(CP_UTF8, 0, _result.c_str(), (int)_result.length(), NULL, 0);
-	MultiByteToWideChar(CP_UTF8, 0, _result.c_str(), (int)_result.length(), Result, size_needed);
-	thePlugin.Log(Result );
+	std::vector<wchar_t> buf=WcharMbcsConverter::char2wchar(_result.c_str());
+	Result->assign(tstr(buf.begin(),buf.end()));
+	//int size_needed = MultiByteToWideChar(CP_UTF8, 0, _result.c_str(), (int)_result.length(), NULL, 0);
+	//MultiByteToWideChar(CP_UTF8, 0, _result.c_str(), (int)_result.length(), Result, size_needed);
+	//thePlugin.Log(Result->c_str() );
 	return 0;
 }
 
@@ -73,7 +78,7 @@ int Model::LoadIntelisense(const TCHAR*  ProjectPath) {
    if (LastError ) {
 	   return 1;
    }
-   sqlite3_close(db);
+   
    return 0;
 }
 		
@@ -98,13 +103,11 @@ int Model::InitDatabase() {
       sqlite3_free(error);
 	  return 1;
    }
-   Obj NewObj("Main.seq","Calc",1);
-   UpdateObjList(NewObj);
-   Obj NewObj2("Main.seq","PNOZ",2);
-   UpdateObjList(NewObj);
+   UpdateObjList(Obj("Main.seq","Calc",1));
+   UpdateObjList(Obj("Main.seq","Calibrator",2));
 
    TCHAR Name[2*MAX_PATH + 1]=_T("");
-   this->GetObject(_T(""),_T(""),Name);
+   //this->GetObject(_T("Main.seq"),_T("Ca"),Name);
 	return 0;
 }
 
@@ -123,10 +126,10 @@ int Model::UpdateObjList(Obj& theObj) {
 		_SQL.append(theObj.Scope()).append("', '").append(theObj.Name()).append("', ").append(std::to_string((long long)theObj.ClassID()));
 		_SQL.append(");");
 	}
-	thePlugin.Log(_SQL.c_str());
    LastError = sqlite3_exec(db, _SQL.c_str(), NULL, NULL, &error);
    if (LastError)
    {
+	   thePlugin.Log(_SQL.c_str());
       thePlugin.Log(_T("Error executing SQLite3 statement: "));
 	  thePlugin.Log(sqlite3_errmsg(db));
       sqlite3_free(error);
@@ -140,10 +143,11 @@ int Model::RefreshObjListID(Obj& theObj) {
 	char *error=0;
 	str _SQL("SELECT ID from ObjectList where Scope=='");
 	_SQL+=theObj.Scope() +"' AND Object='" +theObj.Name()+"';";
-	thePlugin.Log(_SQL.c_str());
+	
 	sqlite3_stmt *res;
 	int rc = sqlite3_prepare(db,_SQL.c_str(), -1, &res, 0);       
-    if (rc != SQLITE_OK) {      
+    if (rc != SQLITE_OK) {   
+		thePlugin.Log(_SQL.c_str());
 		thePlugin.Log(_T("Failed to fetch data")); 
 		thePlugin.Log(sqlite3_errmsg(db));
         return 1;

@@ -54,6 +54,9 @@
     <ClInclude Include="src\StaticDialog.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\WcharMbcsConverter.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\goLine.rc" />

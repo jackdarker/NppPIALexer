@@ -169,6 +169,7 @@
     <ClInclude Include="src\core\NppPluginMenu.h" />
     <ClInclude Include="src\core\sqlite3.h" />
     <ClInclude Include="src\core\sqlite3ext.h" />
+    <ClInclude Include="src\core\WcharMbcsConverter.h" />
     <ClInclude Include="src\Docking.h" />
     <ClInclude Include="src\DockingDlgInterface.h" />
     <ClInclude Include="src\dockingResource.h" />

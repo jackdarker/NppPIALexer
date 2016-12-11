@@ -47,6 +47,10 @@ class CNppPIALexer : public CNppPlugin
         int  m_nFileType;
         bool m_bSupportedFileType;
 		Model *m_Model;
+		tstr* m_File;
+		tstr* m_Scope;
+		tstr* m_Search;
+		tstr* m_Found;
 
     public:
         CNppPIALexer();
@@ -84,6 +88,7 @@ class CNppPIALexer : public CNppPlugin
         void AutoBracketsFunc(int nBracketType);
         void UpdateFileType();
         int  getFileType(bool& isSupported);
+		void ResetAutoComplete();
 
     protected:
         enum eMacroState {
