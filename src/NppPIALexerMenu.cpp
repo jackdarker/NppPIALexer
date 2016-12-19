@@ -10,9 +10,9 @@ extern CNppPIALexerOptions g_opt;
 
 
 FuncItem CNppPIALexerMenu::arrFuncItems[N_NBFUNCITEMS] = {
-    { _T("Autocomplete brackets"), funcAutocomplete, 0, false, NULL },
+    { _T("Enable Plugin"), funcAutocomplete, 0, false, NULL },
     { _T("Settings..."),           funcSettings,     0, false, NULL },
-	{ _T("GOTO DLg"),           funcDockableDlgDemo,     0, false, NULL },
+	{ _T("Control Panel"),           funcDockableDlgDemo,     0, false, NULL },
     { _T(""),                      NULL,             0, false, NULL }, // separator
     { _T("About"),                 funcAbout,        0, false, NULL }
 };

@@ -56,7 +56,7 @@ BOOL CALLBACK DemoDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam)
 					{
 						// Get the current scintilla
 						int which = -1;
-						::SendMessage(/*nppData._nppHandle*/ CNppPluginMenu::m_nppMsgr.getNppWnd(), NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&which);
+						::SendMessage(CNppPluginMenu::m_nppMsgr.getNppWnd(), NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&which);
 						if (which == -1)
 							return FALSE;
 						HWND curScintilla = CNppPluginMenu::m_nppMsgr.getCurrentScintillaWnd();/*(which == 0)? nppData._scintillaMainHandle:nppData._scintillaSecondHandle;*/

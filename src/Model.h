@@ -46,7 +46,7 @@ class Model
         ~Model();
 
 		//Loads Data from Database; if there is none, rebuildObjList is called
-		int LoadIntelisense(const TCHAR*  ProjectPath) ;
+		int LoadIntelisense(const tstr*  ProjectPath) ;
 		//new database is created and filled with parsed data from source, also rebuild ObjList
 		
 
@@ -56,17 +56,17 @@ class Model
 		int RebuildObjList() {return 0;};
 
 		//search for data for Obj-definitions in Objects and function-declaration in seq
-		int RebuildIntelisense(const TCHAR*  ProjectPath) {return 0;};
+		int RebuildIntelisense(const tstr*  ProjectPath) {return 0;};
 
 		//setup a projectdatabase for intelisense; if there is one it will be overwritten
 		int InitDatabase() ;
 
 		//gets a list of possible autocompletion candidates for Objects/in-sequence-functions
 		// Scope is the actual SEQ
-		int GetObject(const tstr* BeginsWith, const tstr* Scope, tstr* Result );
+		int GetObject(const tstr* BeginsWith, const tstr* Scope,const tstr* Object, tstr* Result );
 		//gets a list of possible autocompletion candidates for object-functions
 		// Scope is the actual Objectname
-		int GetFunction(const TCHAR* BeginsWith, const TCHAR* Scope, const TCHAR*  Object ,const TCHAR* Result ){ return 0;};
+		int GetFunction(const tstr* BeginsWith, const tstr* Scope, const tstr*  Object ,const tstr* Result ){ return 0;};
 	private: 
 		int UpdateObjList(Obj& theObj );
 		int RefreshObjListID(Obj& theObj);

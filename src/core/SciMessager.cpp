@@ -44,6 +44,10 @@ int CSciMessager::getCurrentPos() const
     return (int) SendSciMsg(SCI_GETCURRENTPOS);
 }
 
+int CSciMessager::getWordStartPos(int pos, bool onlyWordChar) const
+{
+    return (int) SendSciMsg( SCI_WORDSTARTPOSITION, (WPARAM) pos, (LPARAM) onlyWordChar );
+}
 LRESULT CSciMessager::getDocPointer() const
 {
     return SendSciMsg(SCI_GETDOCPOINTER);

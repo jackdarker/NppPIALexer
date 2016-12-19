@@ -47,10 +47,18 @@ class CNppPIALexer : public CNppPlugin
         int  m_nFileType;
         bool m_bSupportedFileType;
 		Model *m_Model;
-		tstr* m_File;
-		tstr* m_Scope;
-		tstr* m_Search;
+		tstr* m_File;	// the actuel edited file
+		tstr* m_Scope;	// the actual Scope (Object/File) 
+		tstr* m_Search; // the phrase to search for (Object/Function)
 		tstr* m_Found;
+		tstr* m_Object;
+		int m_CurrPos;
+
+		//flags for disabling Intelisense
+		bool m_InComment;	// after //
+		bool m_InString;	// in between "
+		bool m_AfterCmd;	// after ;
+		bool m_Number;		// after [0..9].
 
     public:
         CNppPIALexer();
@@ -81,6 +89,7 @@ class CNppPIALexer : public CNppPlugin
         void SaveOptions();
 		void Log(const TCHAR* log);
 		void Log(const char* log);
+		void ReloadData(const tstr*  ProjectPath);
 		void ReloadData(const TCHAR*  ProjectPath);
 
     protected:

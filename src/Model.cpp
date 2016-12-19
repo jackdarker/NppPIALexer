@@ -30,7 +30,7 @@ void Model::HandleDBError() {
    printf("\n");
    return 0;
 }*/
-int Model::GetObject(const tstr* BeginsWith, const tstr* Scope, tstr* Result ) {
+int Model::GetObject(const tstr* BeginsWith, const tstr* Scope, const tstr* Object,tstr* Result ) {
 	char *error=0;
 	tstr _SQL(_T("SELECT Object from ObjectList where Scope=='"));
 	_SQL+=(*Scope)+_T("' AND Object Like('")+(*BeginsWith)+_T("%');");
@@ -60,15 +60,15 @@ int Model::GetObject(const tstr* BeginsWith, const tstr* Scope, tstr* Result ) {
 	return 0;
 }
 
-int Model::LoadIntelisense(const TCHAR*  ProjectPath) {
+int Model::LoadIntelisense(const tstr*  ProjectPath) {
 	thePlugin.Log(_T("Opening db ..." ));
-   //LastError = sqlite3_open(".\plugins\\Config\\MyDb.db", &db);
-
+	tstr _FullPath;
+	_FullPath.assign(ProjectPath->c_str());
+	_FullPath.append(tstr(_T("\\Intelisense.db")));	//<- this is the name of the Project-Database
 	char Dest[MAX_PATH];
-	WideCharToMultiByte(CP_ACP, 0, ProjectPath, wcslen(ProjectPath)+1, Dest , MAX_PATH, NULL, NULL);
+	WideCharToMultiByte(CP_ACP, 0, _FullPath.c_str(), wcslen(_FullPath.c_str())+1, Dest , MAX_PATH, NULL, NULL);
 
-   LastError = sqlite3_open(Dest, &db);
-   
+   LastError = sqlite3_open(Dest, &db);  
    if (LastError )
    {
       HandleDBError();
@@ -103,11 +103,10 @@ int Model::InitDatabase() {
       sqlite3_free(error);
 	  return 1;
    }
+   // add some test data
    UpdateObjList(Obj("Main.seq","Calc",1));
    UpdateObjList(Obj("Main.seq","Calibrator",2));
 
-   TCHAR Name[2*MAX_PATH + 1]=_T("");
-   //this->GetObject(_T("Main.seq"),_T("Ca"),Name);
 	return 0;
 }
 
@@ -135,6 +134,7 @@ int Model::UpdateObjList(Obj& theObj) {
       sqlite3_free(error);
 	  return 1;
    }
+   LastError = RefreshObjListID(theObj);	//get Ids after insert
 
 	return 0;
 }

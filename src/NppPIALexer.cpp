@@ -73,7 +73,7 @@ LRESULT CALLBACK CNppPIALexer::nppNewWndProc(HWND hWnd, UINT uMsg, WPARAM wParam
     {
         const WORD id = LOWORD(wParam);
         switch ( id )
-        {
+        {	
             case IDM_MACRO_STARTRECORDINGMACRO:
                 thePlugin.OnNppMacro(MACRO_START);
                 break;
@@ -129,6 +129,7 @@ CNppPIALexer::CNppPIALexer()
 	m_Scope = new tstr();
 	m_Search = new tstr();
 	m_Found = new tstr();
+	m_Object= new tstr();
 }
 
 CNppPIALexer::~CNppPIALexer()
@@ -138,6 +139,7 @@ CNppPIALexer::~CNppPIALexer()
 	if(m_Scope) delete m_Scope;
 	if(m_Search) delete m_Search;
 	if(m_Found) delete m_Found;
+	if(m_Object) delete m_Object;
 	if (m_Log) { 
 		m_Log->close();
 		delete m_Log;
@@ -282,6 +284,7 @@ void CNppPIALexer::OnNppShutdown()
 
     SaveOptions();
 }
+//Todo brauchen wir das Makrozeug?
 void CNppPIALexer::OnNppMacro(int nMacroState)
 {
     static int nPrevAutoComplete = -1; // uninitialized
@@ -341,32 +344,28 @@ void CNppPIALexer::OnNppMacro(int nMacroState)
 	}
 	return true;
 }*/
+char charbuf[MAX_PATH];
+TCHAR tcharbuf[MAX_PATH];
+std::vector<wchar_t> wcharbuf;
 
-char words[255]="";
-char *strAC;
-int length=0;
-const int MaxWordLength=20;
-char word[MaxWordLength]="";
-char newword[] ="?";
-//return a list of Objects/Functions depending on the already entered characters
-//depends of the tracker-state 
-char* GetNearestWords(char *root, int rootlength) {
-	char *wordsdict[]= { "fuck", "hallo", "shit", "welt"};
-	_strset_s(words,_countof(words),0);
-	int found=_strncoll(wordsdict[0],root, rootlength);
-	if(0==found) strncat_s(words, _countof(words),wordsdict[0], _TRUNCATE);
-	//words needs to be sorted alphabetical for Scintilla!
-
-	return words;
-}
 //Resets state of Autocomplete-Tracker
 void CNppPIALexer::ResetAutoComplete() {
 	//_strset_s(word,_countof(word),0);
-	m_File->assign(_T("Main.seq"));
+	m_nppMsgr.getCurrentFileFullPath(MAX_PATH,tcharbuf);
+	tstr _File(tcharbuf);
+	//Todo relativen Filepath ermitteln; das hier funktioniert nur bei Unterverzeichnissen
+	_File.erase(0,g_opt.m_LastProject.length()+1);
+	m_File->assign(_File);
 	m_Search->assign(_T(""));
 	m_Found->assign(_T(""));
+	m_Object->assign(_T(""));
+	m_CurrPos=-1;
+	m_InComment=false;
+	m_InString=false;
+	m_AfterCmd=false;	
+	m_Number=false;	
 }
-
+int _wordStart;
 void CNppPIALexer::OnSciCharAdded(const int ch)
 {
     if ( !g_opt.m_bBracketsAutoComplete )
@@ -385,23 +384,29 @@ void CNppPIALexer::OnSciCharAdded(const int ch)
     {
 		case _TCH('.') :
 		case _TCH('(') :
+			ResetAutoComplete();	
+			m_CurrPos = sciMsgr.getCurrentPos();
+			_wordStart=sciMsgr.getWordStartPos(m_CurrPos-1,true);
+			sciMsgr.getTextRange(_wordStart,m_CurrPos-1,charbuf);
+			wcharbuf=WcharMbcsConverter::char2wchar(charbuf);
+			m_Object->assign(tstr(wcharbuf.begin(),wcharbuf.end()));
+			//m_nppMsgr.getCurrentWord(MAX_PATH,prevword); doesnt return correct word?
+            break;
 		case _TCH(' ') :
-            ResetAutoComplete();
+		case _TCH('\x0D') :
+		case _TCH('\x0A') :
+		case _TCH('\t') :
+            ResetAutoComplete();	
             break;
 		default:
-			
-			//_strset_s(newword,_countof(newword),(char)ch);
-			//strncat_s(word, MaxWordLength, newword, _TRUNCATE);
-			//length =strnlen_s(word,_countof(word));
-			//strAC = GetNearestWords(word,length );
 			wchar_t y=WcharMbcsConverter::char2wchar((char)ch);
 			
 			m_Search->append(&y,1); 
-			m_Model->GetObject(m_Search,m_File,m_Found);
+			m_Model->GetObject(m_Search,m_File,m_Object,m_Found);
 			std::vector<char> utf8buf =WcharMbcsConverter::tchar2char(m_Found->c_str());
 			//LRESULT x=sciMsgr.SendSciMsg(SCI_AUTOCSHOW,(WPARAM) length, (LPARAM) strAC);
-			if(utf8buf.size()>0) 
-				LRESULT x=sciMsgr.SendSciMsg(SCI_AUTOCSHOW,(WPARAM) length,(LPARAM)&utf8buf[0]);
+			if(utf8buf.size()>1) //ends always with 0x00 
+				LRESULT x=sciMsgr.SendSciMsg(SCI_AUTOCSHOW,(WPARAM) 0,(LPARAM)&utf8buf[0]);
 			break;
 
 	}
@@ -518,7 +523,6 @@ void CNppPIALexer::ReadOptions()
 
     g_opt.ReadOptions(szPath);
 }
-
 void CNppPIALexer::SaveOptions()
 {
     if ( g_opt.MustBeSaved() )
@@ -534,15 +538,20 @@ void CNppPIALexer::SaveOptions()
 }
 void CNppPIALexer::ReloadData(const TCHAR*  ProjectPath)
 {
+	tstr _path(ProjectPath);
+	ReloadData(&_path);
+}
+void CNppPIALexer::ReloadData(const tstr*  ProjectPath)
+{
 	m_DockDlg.PrintLog(_T("Loading..."));
-	m_DockDlg.PrintLog(ProjectPath);
+	m_DockDlg.PrintLog(ProjectPath->c_str());
 	int RC = m_Model->LoadIntelisense(ProjectPath);
 	if (RC !=0) {
 		m_DockDlg.PrintLog(_T("Loading failed"));
 	}
 	else {
 		m_DockDlg.PrintLog(_T("Loading sucessful"));
-		g_opt.m_LastProject=ProjectPath;
+		g_opt.m_LastProject=ProjectPath->c_str();
 		SaveOptions();
 	}
 }

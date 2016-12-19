@@ -6,6 +6,8 @@ Erzeugen der Intelisense:
 3) einbinden der Commander-Funktionen entsprechend gefundener using-Verweise und ergänzen von ObjectDecl
 4) das ganze wiederholen wenn Dateien geladen/gespeichert werden
 
+) db wird in ../Seq gespeichert
+
 Tabelle ObjectList 
 ID		INT PRIMARY KEY     AUTOINCREMENT
 Scope		TEXT		
@@ -51,6 +53,8 @@ Abrufen von Intelisense:
 	gibt es ein Objekt Calc im Scope Functions.seq::CloseDoor oder Functions.seq?
 	ist es vom Typ Class?
 	welche Function fängt mit "bo" an?
+
+4) kein Intelisense bei "//" ";" oder innerhalb ""
 
 Project
 |-->Main.seq

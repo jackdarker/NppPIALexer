@@ -5,6 +5,8 @@
 Links:
 http://www.sqlite.org
 https://www.tutorialspoint.com/sqlite/sqlite_data_types.htm
+http://docs.notepad-plus-plus.org/index.php/Messages_And_Notifications
+http://www.scintilla.org/ScintillaDoc.html#Notifications
 
 
 1) Tool um aus Objects\xyz\doc\help.txt  eine SQLlite-Datenbasis zu erstellen

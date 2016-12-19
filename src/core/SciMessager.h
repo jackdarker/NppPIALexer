@@ -27,6 +27,7 @@ class CSciMessager
         int           getSelectionEnd() const;
         int           getSelectionStart() const;
         int           getSelText(char* pText) const;
+		int           getWordStartPos(int pos, bool onlyWordChar) const;
         int           getText(int len, char* pText) const;
         int           getTextLength() const;
         int           getTextRange(int pos1, int pos2, char* pText) const;
