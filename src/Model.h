@@ -9,9 +9,15 @@
 
 class Model
 {
+	enum TClassType {
+            tCTClass = 0,
+			tCTSeq =1,
+			tCTType=2
+    };
+
 	class Obj {
 	public:
-		Obj(str scope,str name, int classID) {
+		Obj(str scope,str name, str classID) {
 			m_ID=0;
 			m_Scope=scope;
 			m_Name=name;
@@ -22,19 +28,38 @@ class Model
 		void updateID(int iD) {m_ID=iD;}
 		str Name(){return m_Name;}
 		str Scope(){return m_Scope;}
-		int ClassID(){return m_ClassID;}
+		str ClassID(){return m_ClassID;}
 	private:
 		int m_ID;
 		str m_Scope;
 		str m_Name;
-		int m_ClassID;
+		str m_ClassID;
 	};
 	class ObjDecl {
+	public:
+		ObjDecl(str classID, TClassType type,str function,str params,str returns ) {
+			m_ID=0;
+			m_ClassID=classID;
+			m_ClassType=type;
+			m_Params=params;
+			m_Returns=returns;
+			m_Function=function;
+		};
+		~ObjDecl(){};
+		int ID() {return m_ID;}
+		void updateID(int iD) {m_ID=iD;}
+		str Function(){return m_Function;}
+		str Params(){return m_Params;}
+		str Returns(){return m_Returns;}
+		str ClassID(){return m_ClassID;}
+		TClassType ClassType() {return m_ClassType;}
+	private:
 		int m_ID;
+		TClassType m_ClassType;
 		str m_Function;
 		str m_Params;
 		str m_Returns;
-		int m_ClassID;
+		str m_ClassID;
 	};
 
     protected:
@@ -66,10 +91,12 @@ class Model
 		int GetObject(const tstr* BeginsWith, const tstr* Scope,const tstr* Object, tstr* Result );
 		//gets a list of possible autocompletion candidates for object-functions
 		// Scope is the actual Objectname
-		int GetFunction(const tstr* BeginsWith, const tstr* Scope, const tstr*  Object ,const tstr* Result ){ return 0;};
+		int GetFunction(const tstr* BeginsWith, const tstr* Scope, const tstr*  Object ,tstr* Result );
 	private: 
 		int UpdateObjList(Obj& theObj );
 		int RefreshObjListID(Obj& theObj);
+		int UpdateObjDecl(ObjDecl& theObj );
+		int RefreshObjDeclID(ObjDecl& theObj);
 		void HandleDBError() ;
 
 };

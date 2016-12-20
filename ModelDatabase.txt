@@ -12,7 +12,7 @@ Tabelle ObjectList
 ID		INT PRIMARY KEY     AUTOINCREMENT
 Scope		TEXT		
 Object		TEXT
-IDObjectDecl	INT	NOT NULL
+ClassID		TEXT    NOT NULL
 
 Tabelle ObjectDecl
 ID		INT PRIMARY KEY     AUTOINCREMENT

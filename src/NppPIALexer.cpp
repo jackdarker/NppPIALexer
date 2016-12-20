@@ -379,17 +379,18 @@ void CNppPIALexer::OnSciCharAdded(const int ch)
     int nSelections = (int) sciMsgr.SendSciMsg(SCI_GETSELECTIONS);
     if ( nSelections > 1 )
         return; // nothing to do with multiple selections
-	
+	LRESULT x;
 	switch ( ch )
     {
 		case _TCH('.') :
 		case _TCH('(') :
 			ResetAutoComplete();	
+			//x=sciMsgr.SendSciMsg(SCI_AUTOCSETDROPRESTOFWORD,(WPARAM) 1,(LPARAM)0);
 			m_CurrPos = sciMsgr.getCurrentPos();
 			_wordStart=sciMsgr.getWordStartPos(m_CurrPos-1,true);
 			sciMsgr.getTextRange(_wordStart,m_CurrPos-1,charbuf);
 			wcharbuf=WcharMbcsConverter::char2wchar(charbuf);
-			m_Object->assign(tstr(wcharbuf.begin(),wcharbuf.end()));
+			m_Object->assign(tstr(wcharbuf.begin(),wcharbuf.end()-1));
 			//m_nppMsgr.getCurrentWord(MAX_PATH,prevword); doesnt return correct word?
             break;
 		case _TCH(' ') :
@@ -405,8 +406,11 @@ void CNppPIALexer::OnSciCharAdded(const int ch)
 			m_Model->GetObject(m_Search,m_File,m_Object,m_Found);
 			std::vector<char> utf8buf =WcharMbcsConverter::tchar2char(m_Found->c_str());
 			//LRESULT x=sciMsgr.SendSciMsg(SCI_AUTOCSHOW,(WPARAM) length, (LPARAM) strAC);
-			if(utf8buf.size()>1) //ends always with 0x00 
-				LRESULT x=sciMsgr.SendSciMsg(SCI_AUTOCSHOW,(WPARAM) 0,(LPARAM)&utf8buf[0]);
+			if(utf8buf.size()>1){ //ends always with 0x00 
+				m_CurrPos = sciMsgr.getCurrentPos();
+				_wordStart=sciMsgr.getWordStartPos(m_CurrPos-1,true);
+				x=sciMsgr.SendSciMsg(SCI_AUTOCSHOW,(WPARAM)(m_CurrPos-_wordStart),(LPARAM)&utf8buf[0]);
+			}
 			break;
 
 	}
