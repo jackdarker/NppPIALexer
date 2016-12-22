@@ -3,6 +3,7 @@
 #include "NppPIALexer.h"
 #include "NppPIALexerOptions.h"
 #include "core/WcharMbcsConverter.h"
+#include "SeqParser.h"
 
 extern CNppPIALexer thePlugin;
 //??Todo using sqlite with UTF8, should switch to UTF16 since UNICODE is declared? 
@@ -21,15 +22,54 @@ void Model::HandleDBError() {
     sqlite3_close(db);
 	db = NULL;
 }
-/*int Model::GetObjectCB(void *data, int argc, char **argv, char **azColName){
-   int i;
-   fprintf(stderr, "%s: ", (const char*)data);
-   for(i=0; i<argc; i++){
-      printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
-   }
-   printf("\n");
-   return 0;
-}*/
+int Model::Export() {
+	sqlite3_stmt *res;
+	str _result("");
+	char _sql[]="SELECT ID,Scope,Object,ClassID from ObjectList;";
+	int rc;
+	rc = sqlite3_prepare(db,_sql, -1, &res, 0);       
+	if (rc != SQLITE_OK) {      
+		thePlugin.Log(_sql);
+		thePlugin.Log(_T("Failed to fetch data")); 
+		thePlugin.Log(sqlite3_errmsg(db));
+		return 1;
+	}    
+	rc = sqlite3_step(res);  
+	thePlugin.Log("ID\t\tScope\t\tObject\t\tClassID");
+	while (rc == SQLITE_ROW ) {
+		_result.clear();
+		_result.append((const char*)sqlite3_column_text(res, 0)).append("\t\t");
+		_result.append((const char*)sqlite3_column_text(res, 1)).append("\t\t");
+		_result.append((const char*)sqlite3_column_text(res, 2)).append("\t\t");
+		_result.append((const char*)sqlite3_column_text(res, 3)).append("\t\t");
+		thePlugin.Log(_result.c_str());
+		rc = sqlite3_step(res);
+	}
+	sqlite3_finalize(res);
+	char _sql2[]="Select ID,ClassID,Function,Params,Returns,ClassType From ObjectDecl;";
+	rc = sqlite3_prepare(db,_sql2, -1, &res, 0);       
+	if (rc != SQLITE_OK) {      
+		thePlugin.Log(_sql2);
+		thePlugin.Log(_T("Failed to fetch data")); 
+		thePlugin.Log(sqlite3_errmsg(db));
+		return 1;
+	}    
+	rc = sqlite3_step(res);  
+	thePlugin.Log("ID\t\tClassID\t\tFunction\t\tParams\t\tReturns\t\tClassType");
+	while (rc == SQLITE_ROW ) {
+		_result.clear();
+		_result.append((const char*)sqlite3_column_text(res, 0)).append("\t\t");
+		_result.append((const char*)sqlite3_column_text(res, 1)).append("\t\t");
+		_result.append((const char*)sqlite3_column_text(res, 2)).append("\t\t");
+		_result.append((const char*)sqlite3_column_text(res, 3)).append("\t\t");
+		_result.append((const char*)sqlite3_column_text(res, 4)).append("\t\t");
+		_result.append((const char*)sqlite3_column_text(res, 5)).append("\t\t");
+		thePlugin.Log(_result.c_str());
+		rc = sqlite3_step(res);
+	}
+	sqlite3_finalize(res);
+	return 0;
+}
 int Model::GetObject(const tstr* BeginsWith, const tstr* Scope, const tstr* Object,tstr* Result ) {
 	char *error=0;
 	if (Object->empty()) {
@@ -47,9 +87,11 @@ int Model::GetObject(const tstr* BeginsWith, const tstr* Scope, const tstr* Obje
 		}    
 		str _result("");
 		rc = sqlite3_step(res);  
-		while (rc == SQLITE_ROW) {
+		int i=0;
+		while (rc == SQLITE_ROW && i < AC_LIST_LENGTH_MAX) {
 			_result.append((const char*)sqlite3_column_text(res, 0)).append(" ");
 			rc = sqlite3_step(res);
+			i=i+1;
 		}
 		sqlite3_finalize(res);
 		std::vector<wchar_t> buf=WcharMbcsConverter::char2wchar(_result.c_str());
@@ -76,16 +118,17 @@ int Model::GetFunction(const tstr* BeginsWith, const tstr* Scope, const tstr* Ob
     }    
     str _result("");
     rc = sqlite3_step(res);  
-    while (rc == SQLITE_ROW) {
+	int i=0;
+    while (rc == SQLITE_ROW && i < AC_LIST_LENGTH_MAX) {
 		_result.append((const char*)sqlite3_column_text(res, 0)).append(" ");
 		rc = sqlite3_step(res);
+		i=i+1;
     }
     sqlite3_finalize(res);
 	std::vector<wchar_t> buf=WcharMbcsConverter::char2wchar(_result.c_str());
 	Result->assign(tstr(buf.begin(),buf.end()));
 	return 0;
 }
-
 int Model::LoadIntelisense(const tstr*  ProjectPath) {
 	thePlugin.Log(_T("Opening db ..." ));
 	tstr _FullPath;
@@ -106,8 +149,55 @@ int Model::LoadIntelisense(const tstr*  ProjectPath) {
    }
    
    return 0;
+}	
+
+/*Todo
+ifstream fin;
+  string dir, filepath;
+  int num;
+  DIR *dp;
+  struct dirent *dirp;
+  struct stat filestat;
+
+  cout << "dir to get files of: " << flush;
+  getline( cin, dir );  // gets everything the user ENTERs
+
+  dp = opendir( dir.c_str() );
+  if (dp == NULL)
+    {
+    cout << "Error(" << errno << ") opening " << dir << endl;
+    return errno;
+    }
+
+  while ((dirp = readdir( dp )))
+    {
+    filepath = dir + "/" + dirp->d_name;
+
+    // If the file is a directory (or is in some way invalid) we'll skip it 
+    if (stat( filepath.c_str(), &filestat )) continue;
+    if (S_ISDIR( filestat.st_mode ))         continue;
+
+    // Endeavor to read a single number from the file and display it
+    fin.open( filepath.c_str() );
+    if (fin >> num)
+      cout << filepath << ": " << num << endl;
+    fin.close();
+    }
+
+  closedir( dp );
+*/
+
+// Todo would be nice to run this in parallel thread
+int Model::RebuildIntelisense(const tstr*  ProjectPath) {
+	SeqParser _parser(this);
+	
+	std::vector<char> _vpath = WcharMbcsConverter::tchar2char(ProjectPath->c_str());
+	// remove 00
+	std::string _path(_vpath.begin(),_vpath.end()-1); 
+	_parser.AnalyseFile(false,_path,"Main.seq");
+
+	return 0;
 }
-		
 int Model::InitDatabase() {
 	char *error=0;
 	const char *sqlDropTable = "DROP TABLE ObjectList";
@@ -146,15 +236,22 @@ int Model::InitDatabase() {
 		sqlite3_free(error);
 		return 1;
 	}
-	// add some test data
+	// add some test data 
+	/*
 	UpdateObjList(Obj("Main.seq","Calc","Calculator"));
 	UpdateObjList(Obj("Main.seq","Cal","Calibrator"));
 	UpdateObjDecl(ObjDecl("Calculator",tCTClass,"boolAnd","bool A,bool B","bool bReturn"));
+	UpdateObjDecl(ObjDecl("Calculator",tCTClass,"boolOr","bool A,bool B","bool bReturn"));
 	UpdateObjDecl(ObjDecl("Calibrator",tCTClass,"calcY","string Channel,float X","float fY"));
+
+	UpdateObjList(Obj("Main.seq","","test1.seq"));
+	UpdateObjList(Obj("Main.seq","","Main.seq"));
+	UpdateObjDecl(ObjDecl("Main.seq",tCTSeq,"Main","",""));
+	UpdateObjDecl(ObjDecl("test1.seq",tCTSeq,"Homing","","bool bReturn"));
+	UpdateObjDecl(ObjDecl("test1.seq",tCTSeq,"CloseDoor","bool bClose","bool bReturn"));*/
 
 	return 0;
 }
-
 int Model::UpdateObjList(Obj& theObj) {
 	char *error=0;
 	LastError = RefreshObjListID(theObj);
@@ -163,8 +260,8 @@ int Model::UpdateObjList(Obj& theObj) {
 	if(theObj.ID()>0) {
 		_SQL= ("Update ObjectList Set Scope='" +theObj.Scope() +
 			"',Object='"+theObj.Name()+
-			"',IDObjectDecl="+std::to_string((long long)theObj.ID())+
-			" where ID="+std::to_string((long long)theObj.ID()) );
+			"',ClassID='"+theObj.ClassID()+
+			"' where ID="+std::to_string((long long)theObj.ID()) );
 	}else {
 		_SQL = ("INSERT INTO ObjectList (Scope , Object , ClassID) VALUES('");
 		_SQL.append(theObj.Scope()).append("', '").append(theObj.Name()).append("', '").append(theObj.ClassID());

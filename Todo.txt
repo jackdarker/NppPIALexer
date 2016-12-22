@@ -1,3 +1,6 @@
+//-> Groß/Kleinschreibung bei Suche ignorieren??
+
+
 
 //-> Docking-Windows Ctrls auf Layout-Size anpassen
 #define ID_EDITCHILD 100

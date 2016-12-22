@@ -9,6 +9,7 @@
 
 class Model
 {
+public:
 	enum TClassType {
             tCTClass = 0,
 			tCTSeq =1,
@@ -67,6 +68,7 @@ class Model
 		int LastError;
 
     public:
+		static const int AC_LIST_LENGTH_MAX =10; //limits the maximum number of entrys in Autocompletion-list
         Model();
         ~Model();
 
@@ -81,7 +83,7 @@ class Model
 		int RebuildObjList() {return 0;};
 
 		//search for data for Obj-definitions in Objects and function-declaration in seq
-		int RebuildIntelisense(const tstr*  ProjectPath) {return 0;};
+		int RebuildIntelisense(const tstr*  ProjectPath);
 
 		//setup a projectdatabase for intelisense; if there is one it will be overwritten
 		int InitDatabase() ;
@@ -92,10 +94,17 @@ class Model
 		//gets a list of possible autocompletion candidates for object-functions
 		// Scope is the actual Objectname
 		int GetFunction(const tstr* BeginsWith, const tstr* Scope, const tstr*  Object ,tstr* Result );
-	private: 
+
+		int Export();
 		int UpdateObjList(Obj& theObj );
-		int RefreshObjListID(Obj& theObj);
 		int UpdateObjDecl(ObjDecl& theObj );
+	private: 
+		//removes entrys that dont exist anymore
+		// -> setzt checkedMarker=false in jedem eintrag
+		// -> RebuildIntelisense wird aufgerufen, was checkedMarker=true setzt für jeden Eintrag der bestätigt wird
+		// -> CleanupDeadLink löscht alle wo immer noch checkedMarker==false
+		int CleanupDeadLinks() {return 0;};
+		int RefreshObjListID(Obj& theObj);
 		int RefreshObjDeclID(ObjDecl& theObj);
 		void HandleDBError() ;
 

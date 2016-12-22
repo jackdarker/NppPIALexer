@@ -30,6 +30,15 @@ BOOL CNppMessager::getCurrentFileFullPath(int strLen, TCHAR *str) const
 {
     return (BOOL) SendNppMsg( NPPM_GETFULLCURRENTPATH, (WPARAM) strLen, (LPARAM) str );
 }
+BOOL CNppMessager::getBufferFullPath(int ID, int strLen,TCHAR *str) const
+{
+	int _length = SendNppMsg( NPPM_GETFULLPATHFROMBUFFERID , (WPARAM) ID, (LPARAM) NULL );
+	if(_length<0 || _length >= strLen) {
+		return false;
+	}
+	_length = SendNppMsg( NPPM_GETFULLPATHFROMBUFFERID , (WPARAM) ID, (LPARAM) str );
+    return _length>=1;
+}
 
 BOOL CNppMessager::getCurrentFileDirectory(int strLen, TCHAR *str) const
 {

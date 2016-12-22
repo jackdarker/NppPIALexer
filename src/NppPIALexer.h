@@ -73,7 +73,7 @@ class CNppPIALexer : public CNppPlugin
         virtual void OnNppSetInfo(const NppData& nppd);
 
         // custom n++ notifications
-        void OnNppBufferActivated();
+        void OnNppBufferActivated(int ID);
         void OnNppFileOpened();
         void OnNppFileSaved();
         void OnNppReady();
@@ -85,6 +85,7 @@ class CNppPIALexer : public CNppPlugin
         void OnSciCharAdded(const int ch);
 
         // custom functions
+		void ExportIntelisense(); //just for debug
         void ReadOptions();
         void SaveOptions();
 		void Log(const TCHAR* log);

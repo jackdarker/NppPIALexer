@@ -1,0 +1,10 @@
+//desc: returns the logical AND of 2 variables
+//param: bA 
+//param: bB
+//return: bReturn
+function boolAnd(bool bA, bool bB) -> bReturn
+
+//desc: returns the inverted value
+//param: bA 
+//return: bReturn
+function boolNot(bool bA) -> bReturn

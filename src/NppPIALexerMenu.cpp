@@ -70,7 +70,7 @@ void CNppPIALexerMenu::UpdateMenuState()
 
     if ( g_opt.m_bBracketsAutoComplete )
     {
-        thePlugin.OnNppBufferActivated();
+        thePlugin.OnNppBufferActivated(-1);
     }
 }
 

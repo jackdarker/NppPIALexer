@@ -1,1 +1,9 @@
-Ca
+#include test1.seq
+
+#using "Source\Objects\Calculator\Calculator_Commander.vi" as Calc
+#using "Source\Objects\Calibrator\Calibrator Commander.vi" as Cal
+
+function Homing() -> bool bReturn, string sText
+{
+	bool bOK=true;
+}

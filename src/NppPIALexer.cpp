@@ -3,15 +3,11 @@
 #include "core/WcharMbcsConverter.h"
 #include "core/npp_stuff/resource.h"
 
-
-
 // can be _T(x), but _T(x) may be incompatible with ANSI mode
 #define _TCH(x)  (x)
 
-
 extern CNppPIALexer thePlugin;
 CNppPIALexerOptions g_opt;
-
 
 const TCHAR* CNppPIALexer::PLUGIN_NAME = _T("NppPIALexer");
 const char* CNppPIALexer::strBrackets[tbtCount - 1] = {
@@ -23,6 +19,10 @@ const char* CNppPIALexer::strBrackets[tbtCount - 1] = {
     "<>",
     "</>"
 };
+
+char charbuf[MAX_PATH];
+TCHAR tcharbuf[MAX_PATH];
+std::vector<wchar_t> wcharbuf;
 
 bool CNppPIALexer::isNppMacroStarted = false;
 bool CNppPIALexer::isNppWndUnicode = true;
@@ -169,12 +169,10 @@ FuncItem* CNppPIALexer::nppGetFuncsArray(int* pnbFuncItems)
     *pnbFuncItems = CNppPIALexerMenu::N_NBFUNCITEMS;
     return CNppPIALexerMenu::arrFuncItems;
 }
-
 const TCHAR* CNppPIALexer::nppGetName()
 {
     return PLUGIN_NAME;
 }
-
 void CNppPIALexer::nppBeNotified(SCNotification* pscn)
 {
     if ( pscn->nmhdr.hwndFrom == m_nppMsgr.getNppWnd() )
@@ -183,7 +181,7 @@ void CNppPIALexer::nppBeNotified(SCNotification* pscn)
         switch ( pscn->nmhdr.code )
         {
             case NPPN_BUFFERACTIVATED:
-                OnNppBufferActivated();
+                OnNppBufferActivated(pscn->nmhdr.idFrom);
                 break;
         
             case NPPN_FILEOPENED:
@@ -222,30 +220,29 @@ void CNppPIALexer::nppBeNotified(SCNotification* pscn)
         // <<< notifications from Notepad++
     }
 }
-
 void CNppPIALexer::OnNppSetInfo(const NppData& nppd)
 {
     m_PluginMenu.setNppData(nppd);
     isNppWndUnicode = ::IsWindowUnicode(nppd._nppHandle) ? true : false;
 }
-
-void CNppPIALexer::OnNppBufferActivated()
+void CNppPIALexer::OnNppBufferActivated(int ID)
 {
     UpdateFileType();
+	if(ID>-1) {
+		m_nppMsgr.getBufferFullPath(ID,MAX_PATH,tcharbuf);
+		//??Log(_T("Buffer activated"));
+		//Log(tcharbuf);
+	}
 }
-
 void CNppPIALexer::OnNppFileOpened()
 {
     //this handler is not needed because file opening
     //is handled by OnNppBufferActivated()
-    // UpdateFileType();
 }
-
 void CNppPIALexer::OnNppFileSaved()
 {
     UpdateFileType();
 }
-
 void CNppPIALexer::OnNppReady()
 {
     ReadOptions();
@@ -265,7 +262,6 @@ void CNppPIALexer::OnNppReady()
 		// Initialize dockable demo dialog
 	m_DockDlg.init((HINSTANCE) thePlugin.getDllModule(), NULL);
 }
-
 void CNppPIALexer::OnNppShutdown()
 {
     if ( nppOriginalWndProc )
@@ -344,14 +340,13 @@ void CNppPIALexer::OnNppMacro(int nMacroState)
 	}
 	return true;
 }*/
-char charbuf[MAX_PATH];
-TCHAR tcharbuf[MAX_PATH];
-std::vector<wchar_t> wcharbuf;
 
 //Resets state of Autocomplete-Tracker
 void CNppPIALexer::ResetAutoComplete() {
-	//_strset_s(word,_countof(word),0);
+	CSciMessager sciMsgr(m_nppMsgr.getCurrentScintillaWnd());
 	m_nppMsgr.getCurrentFileFullPath(MAX_PATH,tcharbuf);
+	char utf8buf[]={'.','('}; //Todo muss nur einmal konfiguriert werden?
+	LRESULT x = sciMsgr.SendSciMsg(SCI_AUTOCSETFILLUPS,(WPARAM) 0,(LPARAM)&utf8buf[0]);
 	tstr _File(tcharbuf);
 	//Todo relativen Filepath ermitteln; das hier funktioniert nur bei Unterverzeichnissen
 	_File.erase(0,g_opt.m_LastProject.length()+1);
@@ -552,14 +547,17 @@ void CNppPIALexer::ReloadData(const tstr*  ProjectPath)
 	int RC = m_Model->LoadIntelisense(ProjectPath);
 	if (RC !=0) {
 		m_DockDlg.PrintLog(_T("Loading failed"));
+		return;
 	}
-	else {
-		m_DockDlg.PrintLog(_T("Loading sucessful"));
-		g_opt.m_LastProject=ProjectPath->c_str();
-		SaveOptions();
-	}
+	m_DockDlg.PrintLog(_T("Loading sucessful"));
+	g_opt.m_LastProject=ProjectPath->c_str();
+	SaveOptions();
+	m_Model->RebuildIntelisense(ProjectPath);	
 }
-
+void  CNppPIALexer::ExportIntelisense() {
+	if(!m_Model) return;
+	m_Model->Export();
+}
 void CNppPIALexer::UpdateFileType() // <-- call it when the plugin becomes active!!!
 {
     if ( !g_opt.m_bBracketsAutoComplete )
@@ -595,6 +593,8 @@ static bool isEscapedPrefix(const char* str, int len)
 
 void CNppPIALexer::AutoBracketsFunc(int nBracketType)
 {
+	return; //??Brackets werden von NPP automatisch vervollständigt
+
     if ( nBracketType == tbtTag )
     {
         if ( g_opt.m_bBracketsDoTagIf && (m_nFileType != tftHtmlCompatible) )

@@ -156,6 +156,7 @@
     <ClCompile Include="src\core\NppPluginMenu.cpp" />
     <ClCompile Include="src\core\SciMessager.cpp" />
     <ClCompile Include="src\Model.cpp" />
+    <ClCompile Include="src\SeqParser.cpp" />
     <ClCompile Include="src\SettingsDlg.cpp" />
     <ClCompile Include="src\NppPIALexer.cpp" />
     <ClCompile Include="src\NppPIALexerMenu.cpp" />
@@ -177,6 +178,7 @@
     <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\core\SciMessager.h" />
+    <ClInclude Include="src\SeqParser.h" />
     <ClInclude Include="src\SettingsDlg.h" />
     <ClInclude Include="src\NppPIALexer.h" />
     <ClInclude Include="src\NppPIALexerMenu.h" />
