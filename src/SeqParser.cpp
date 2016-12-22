@@ -28,6 +28,7 @@ int SeqParser::ParseLine(std::string Line) {
 	std::string _A;
 	std::string _B;
 	std::string _C;
+	Line = SeqParser::RemoveSpaces(Line); //could cause issue with filepaths containing spaces?
 	int _foundComment=Line.find("//",_offset);
 	if (_foundComment!= std::string::npos) { // Todo skip if comment
 	}
@@ -46,13 +47,12 @@ int SeqParser::ParseLine(std::string Line) {
 		m_Model->UpdateObjList(Model::Obj(m_RelFilePath,_B,_A));
 	} else if ((_found=Line.find("function ",_offset), _found != std::string::npos)) {
 		// function boolAnd (bool bA, bool bB) ->bool bReturn
-		//Todo strip off additional whitespace
 		_offset = _offset+_found+9; // after function
 		if ((_foundC=Line.find("->",_offset),_foundC != std::string::npos)) {
 			_C= Line.substr(_foundC+2);	// after ->
 			if ((_foundB=Line.find("(",_offset),_foundB != std::string::npos)) {
-				_B= Line.substr(_foundB+1,_foundC-_foundB-1 ); // in between ( )
-				_A= Line.substr(_foundB,_foundB-_offset);
+				_B= Line.substr(_foundB+1,_foundC-_foundB-2 ); // in between ( )
+				_A= Line.substr(_offset,_foundB-_offset);
 				m_Model->UpdateObjDecl(Model::ObjDecl(m_RelFilePath,
 					m_IsClassDefinition? Model::tCTClass : Model::tCTSeq ,
 					_A,_B,_C));

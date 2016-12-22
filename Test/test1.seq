@@ -1,2 +1,5 @@
-dggdsg. dgdgsd..
- 
+
+function Main(double Count) -> bool bReturn, string sText
+{
+	bool bOK=true;
+}

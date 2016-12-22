@@ -192,8 +192,7 @@ int Model::RebuildIntelisense(const tstr*  ProjectPath) {
 	SeqParser _parser(this);
 	
 	std::vector<char> _vpath = WcharMbcsConverter::tchar2char(ProjectPath->c_str());
-	// remove 00
-	std::string _path(_vpath.begin(),_vpath.end()-1); 
+	std::string _path(_vpath.begin(),_vpath.end()-1); // remove 00
 	_parser.AnalyseFile(false,_path,"Main.seq");
 
 	return 0;
