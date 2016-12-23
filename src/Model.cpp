@@ -193,8 +193,36 @@ int Model::RebuildIntelisense(const tstr*  ProjectPath) {
 	
 	std::vector<char> _vpath = WcharMbcsConverter::tchar2char(ProjectPath->c_str());
 	std::string _path(_vpath.begin(),_vpath.end()-1); // remove 00
-	_parser.AnalyseFile(false,_path,"Main.seq");
+	_path.append("/PRG/SEQ"); // <- all sequences should be here
+		// Todo how about subprojects
 
+	std::string _filepath;	// \subdir\test.seq
+	std::string _file;		// test.seq
+	std::string _currDir;	// \subdir
+	DIR *dp;
+	struct dirent *dirp;
+	struct stat _filestat;
+	std::vector<std::string> _dirs; //stack of directories relative to _path
+	_dirs.push_back("");
+	while (_dirs.size()>0) {
+		_currDir= _dirs.back();
+		_dirs.pop_back();
+		dp=opendir((_path +_currDir).c_str());
+		if(!dp) continue;
+		while ((dirp = readdir( dp ))) {
+			_file = dirp->d_name;
+			_filepath = _path + _currDir + "/" + _file;
+			// If the file is a directory (or is in some way invalid) we'll skip it 
+			if (stat( _filepath.c_str(), &_filestat )) continue;
+			if (_file=="." || _file=="..") continue;
+			if (S_ISDIR( _filestat.st_mode ))  {
+				_dirs.push_back(_currDir + "/" + _file);
+				continue;
+			}
+			if (_file.substr(_file.length()-4,4)!=".seq") continue; 
+			_parser.AnalyseFile(false,_path,_file);
+		}
+	}
 	return 0;
 }
 int Model::InitDatabase() {

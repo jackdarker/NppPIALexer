@@ -46,17 +46,18 @@ public:
 			}
 			if(_text || _text2) {  // in between comment
 				_Start=true;
-				if ((_white & 0x2)>0) out.push_back(' ');
+				if ((_white & 0x2)>0) out.push_back(' '); //add space if there was at leat one before
 				out.push_back(*str_Iter);
 			} else {
-				if (*str_Iter==' ' && (_special & 0x2)==0) {
+				if (*str_Iter==' ' && (_special & 0x2)==0) { //set flag if there is space but no special before
 					_white=_white+1;
-				} else if (filter.find(*str_Iter)!=std::string::npos) {
+				} else if (filter.find(*str_Iter)!=std::string::npos) { //special char; scrap space before
 					_special=_special +1;
-					_white = 0;	//special char; scrap space before
-				} else if ((_special & 0x2)>0){
-					_white = 0;
-					_special = 0;
+					_white = 0;	
+				} else if (*str_Iter==' ' && (_special & 0x2)>0){ //scrap space after special
+					_white = 2;	
+				} else if ((_special & 0x2)>0){ //reset flag if normal char
+					_special = 0;	
 				}
 
 				if ((_white & 0x2)>0 && (_white & 0x1 )==0 && 
@@ -68,11 +69,8 @@ public:
 					out.push_back(*str_Iter);
 				}
 			}
-			if (_Start)	{  _white=(_white*2)& 0x3; 
-			} else {
-				_white=0;
-			}
-			_special=(_special*2 | (_special & 0x2))& 0x3;
+			_Start ? (_white=(_white*2)& 0x3): (_white=0); // shift out the flag
+			_special=(_special*2 | (_special & 0x2))& 0x3; //keep the flag; required if multiple spaces after special flag
 		}
 		return out;
 	};

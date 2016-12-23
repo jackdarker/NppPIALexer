@@ -59,6 +59,9 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="src\SeqParser.h" />
+    <ClInclude Include="src\core\dirent.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\goLine.rc" />

@@ -15,6 +15,7 @@
 //#include <string.h>
 #include <string>
 #include <search.h>
+#include "dirent.h"
 
 typedef std::basic_string<TCHAR> tstr;
 typedef std::basic_string<char> str;

@@ -1,4 +1,5 @@
 #include test1.seq
+#include subfunctions\Functions.seq
 
 #using "Source\Objects\Calculator\Calculator_Commander.vi" as Calc
 #using "Source\Objects\Calibrator\Calibrator Commander.vi" as Cal

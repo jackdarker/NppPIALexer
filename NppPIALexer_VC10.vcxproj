@@ -165,6 +165,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\base.h" />
+    <ClInclude Include="src\core\dirent.h" />
     <ClInclude Include="src\core\NppMessager.h" />
     <ClInclude Include="src\core\NppPlugin.h" />
     <ClInclude Include="src\core\NppPluginMenu.h" />

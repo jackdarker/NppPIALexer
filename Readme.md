@@ -52,9 +52,9 @@ z.B. ObjectList
 Scope		Object	ClassID		
 ---------------------------------------------------------------------------------------------------------------------------------
 Main.seq	Calc	Calculator			<= Definition Objekt-Klasse
-Main.seq		Functions.seq			<= Funktion in include-sequenz
-Functions.seq		Functions.seq			<= Funktion in dieser sequenz
-Main.seq		Main.seq
+Main.seq	Functions.seq	Functions.seq			<= Funktion in include-sequenz
+Functions.seq	Functions.seq	Functions.seq			<= Funktion in dieser sequenz
+Main.seq	Main.seq	Main.seq
 Main.seq	bOK	bool				<= Variable in dieser Sequenz (global)
 Main.seq::Main	sText	string				<= Variable in dieser Funktion (lokal)
 
