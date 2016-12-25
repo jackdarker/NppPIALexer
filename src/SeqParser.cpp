@@ -1,7 +1,7 @@
 #include "SeqParser.h"
 
-// BasePath = c:\projects\xyz\prg\seq
-// RelFilePath =						default\Main.seq
+// BasePath = c:\projects\xyz
+// RelFilePath =			\prg\seq\default\Main.seq
 
 int SeqParser::AnalyseFile(bool IsClassDefinition, std::string BasePath,std::string RelFilePath){ 
 	std::ifstream _filestream;
@@ -11,11 +11,13 @@ int SeqParser::AnalyseFile(bool IsClassDefinition, std::string BasePath,std::str
 	m_IsClassDefinition = IsClassDefinition;
 	
 	//Todo make this really a relative path
-	Path.append(BasePath).append("\\").append(RelFilePath);
+	Path.append(m_BasePath).append("\\").append(m_RelFilePath);
 	_filestream.open(Path,std::ios::in);
 	if (_filestream.fail()) {
 		return 1;
 	}
+	m_Model->UpdateObjList(Model::Obj(m_RelFilePath,m_RelFilePath,m_RelFilePath)); //each SEQ includes itself
+
 	std::string buffer;
 	while (std::getline(_filestream, buffer)) { 
 		ParseLine(buffer);
@@ -35,9 +37,10 @@ int SeqParser::ParseLine(std::string Line) {
 	}
 	if ((_found=Line.find("#using ",_offset),_found != std::string::npos)) {
 		//   #using "sfswf\sf\Calculator_Commander.vi" as Calc
-		_offset = _offset+_found+7; // after #using
+		_offset = _offset+_found+8; // after #using "
 		if ((_found=Line.find(" as ",_offset),_found != std::string::npos)) {
-			_A= Line.substr(_offset, _found-_offset);
+			_A= Line.substr(_offset, _found-_offset-1);  //strip of ""
+			_A="\\"+_A;
 			_B= Line.substr(_found + 4);
 			m_Model->UpdateObjList(Model::Obj(m_RelFilePath,_B,_A));
 		}
@@ -45,7 +48,7 @@ int SeqParser::ParseLine(std::string Line) {
 		// #include test1.seq
 		_offset = _offset+_found+9; // after #include
 		_A= Line.substr(_offset);
-		m_Model->UpdateObjList(Model::Obj(m_RelFilePath,_A,_A));
+		m_Model->UpdateObjList(Model::Obj(m_RelFilePath,_A,Model::DIR_SEQUENCES() +"\\"+ _A));
 	} else if ((_found=Line.find("function ",_offset), _found != std::string::npos)) {
 		// function boolAnd (bool bA, bool bB) ->bool bReturn
 		_offset = _offset+_found+9; // after function

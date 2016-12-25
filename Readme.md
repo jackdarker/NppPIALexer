@@ -6,8 +6,11 @@ ________________________________________________________________________________
 Links
 ________________________________________________________________________________________________________________
 http://www.cplusplus.com/reference/cstring/
-http://www.sqlite.org
 https://www.tutorialspoint.com/sqlite/sqlite_data_types.htm
+
+http://www.sqlite.org
+https://github.com/tronkko/dirent
+
 http://docs.notepad-plus-plus.org/index.php/Messages_And_Notifications
 http://www.scintilla.org/ScintillaDoc.html#Notifications
 
@@ -29,14 +32,14 @@ ________________________________________________________________________________
 ________________________________________________________________________________________________________________
 Datenmodel
 ________________________________________________________________________________________________________________
-Intelisense wird in SQLite3 db gespeichert in Ordner /Seq
+Intelisense wird in SQLite3 db gespeichert in Projektordner
 
 Tabelle ObjectList 
 ID		INT PRIMARY KEY     AUTOINCREMENT
 Scope		TEXT		
 Object		TEXT
 ClassID		TEXT    NOT NULL
-Checked		INT
+State		INT
 
 Tabelle ObjectDecl
 ID		INT PRIMARY KEY     AUTOINCREMENT
@@ -46,7 +49,11 @@ Function	TEXT    NOT NULL
 ParameterList	TEXT    
 ReturnList	TEXT    
 Descr		TEXT
-Checked		INT
+State		INT
+
+Bedeutung von State: 
+	0 = Objekt nicht auffindbar (d.h. eventuel aus DB löschen)
+	1 = Objekt existiert 
 
 z.B. ObjectList
 Scope		Object	ClassID		
@@ -64,7 +71,7 @@ ClassID		ClassType	Function	ParameterList		ReturnList		Descr
 Calculator	Class		boolAnd		(bool A,bool B)		-> bool X		x = A & B
 Calculator	Class		floatEquals	(float A, float B)	-> bool X
 Preh_Trace	Class		CheckSNState	(string SN,string Type)	-> bool OK ,[string ACK]
-Functions.seq	Seq		Homing					-> bool OK, string Text
+Functions.seq	Seq		Homing		()			-> bool OK, string Text
 Functions.seq	Seq		CloseDoor	(bool bClose)		-> bool OK
 Main.seq	Seq		Main
 bool		Typ
@@ -81,7 +88,12 @@ ________________________________________________________________________________
 	ist es vom Typ Class?
 	welche Function fängt mit "bo" an?
 
-4) kein Intelisense bei "//" ";" oder innerhalb ""
+) (in Main.seq eintippen) "Ho"  das könnte eine Funktion, ein Klassen-Objekt oder ein Typ sein
+) Nachschlagen in ObjList: Scope=Main.seq	Obj Like('Ho%') 	=> KlassenObjekt
+  Nachschlagen in ObjDecl: ClassID Like("Ho%") ClassTyp=Typ		=> Typ
+  Nachschlagen in ObjList join ObjDecl on ClassID: Function Like("Ho%")	Typ=Seq	=> Function
+
+) kein Intelisense bei "//" ";" oder innerhalb ""
 
 Project
 |-->Main.seq

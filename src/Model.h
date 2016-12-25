@@ -69,6 +69,15 @@ public:
 
     public:
 		static const int AC_LIST_LENGTH_MAX =10; //limits the maximum number of entrys in Autocompletion-list
+		static const std::string& DIR_SEQUENCES(){ //<- this is the SEQ-directory relative to project
+			//shitty workaround because static const string variables not possible ?!
+			static std::string foo("\\PRG\\SEQ");
+			return foo;
+		}
+		static const tstr& FILE_DB(){	//<- this is the name of the Project-Database relative to project
+			static tstr foo(_T("\\Intelisense.db"));
+			return foo;
+		}
         Model();
         ~Model();
 
@@ -79,11 +88,11 @@ public:
 
 		//if there is no Database new one is created
 		//parses all SEQ for Obj-definitions and in-sequence-functions of the current working directory
-		//calls RebuildIntelisense 
-		int RebuildObjList() {return 0;};
+		//calls RebuildClassDefinition 
+		int RebuildObjList(const tstr*  ProjectPath);
 
-		//search for data for Obj-definitions in Objects and function-declaration in seq
-		int RebuildIntelisense(const tstr*  ProjectPath);
+		//search for data of classes (declaration of functions)
+		int RebuildClassDefinition(const tstr*  ProjectPath);
 
 		//setup a projectdatabase for intelisense; if there is one it will be overwritten
 		int InitDatabase() ;
@@ -99,7 +108,7 @@ public:
 		int UpdateObjList(Obj& theObj );
 		int UpdateObjDecl(ObjDecl& theObj );
 	private: 
-		//removes entrys that dont exist anymore
+		//Todo ?? removes entrys that dont exist anymore
 		// -> setzt checkedMarker=false in jedem eintrag
 		// -> RebuildIntelisense wird aufgerufen, was checkedMarker=true setzt für jeden Eintrag der bestätigt wird
 		// -> CleanupDeadLink löscht alle wo immer noch checkedMarker==false

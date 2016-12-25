@@ -349,8 +349,9 @@ void CNppPIALexer::ResetAutoComplete() {
 	LRESULT x = sciMsgr.SendSciMsg(SCI_AUTOCSETFILLUPS,(WPARAM) 0,(LPARAM)&utf8buf[0]);
 	tstr _File(tcharbuf);
 	//Todo relativen Filepath ermitteln; das hier funktioniert nur bei Unterverzeichnissen
-	_File.erase(0,g_opt.m_LastProject.length()+1);
+	_File.erase(0,g_opt.m_LastProject.length()/*+1*/);
 	m_File->assign(_File);
+	//m_File->replace(m_File->begin(),m_File->end(),"/","\\");
 	m_Search->assign(_T(""));
 	m_Found->assign(_T(""));
 	m_Object->assign(_T(""));
@@ -552,7 +553,8 @@ void CNppPIALexer::ReloadData(const tstr*  ProjectPath)
 	m_DockDlg.PrintLog(_T("Loading sucessful"));
 	g_opt.m_LastProject=ProjectPath->c_str();
 	SaveOptions();
-	m_Model->RebuildIntelisense(ProjectPath);	
+	m_Model->RebuildObjList(ProjectPath);
+	m_Model->RebuildClassDefinition(ProjectPath);
 }
 void  CNppPIALexer::ExportIntelisense() {
 	if(!m_Model) return;

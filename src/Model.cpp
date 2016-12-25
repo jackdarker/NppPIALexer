@@ -25,7 +25,7 @@ void Model::HandleDBError() {
 int Model::Export() {
 	sqlite3_stmt *res;
 	str _result("");
-	char _sql[]="SELECT ID,Scope,Object,ClassID from ObjectList;";
+	char _sql[]="SELECT ID,Scope,Object,ClassID,State from ObjectList;";
 	int rc;
 	rc = sqlite3_prepare(db,_sql, -1, &res, 0);       
 	if (rc != SQLITE_OK) {      
@@ -35,18 +35,19 @@ int Model::Export() {
 		return 1;
 	}    
 	rc = sqlite3_step(res);  
-	thePlugin.Log("ID\t\tScope\t\tObject\t\tClassID");
+	thePlugin.Log("ID\t\tScope\t\tObject\t\tClassID\t\tState");
 	while (rc == SQLITE_ROW ) {
 		_result.clear();
 		_result.append((const char*)sqlite3_column_text(res, 0)).append("\t\t");
 		_result.append((const char*)sqlite3_column_text(res, 1)).append("\t\t");
 		_result.append((const char*)sqlite3_column_text(res, 2)).append("\t\t");
 		_result.append((const char*)sqlite3_column_text(res, 3)).append("\t\t");
+		_result.append((const char*)sqlite3_column_text(res, 4)).append("\t\t");
 		thePlugin.Log(_result.c_str());
 		rc = sqlite3_step(res);
 	}
 	sqlite3_finalize(res);
-	char _sql2[]="Select ID,ClassID,Function,Params,Returns,ClassType From ObjectDecl;";
+	char _sql2[]="Select ID,ClassID,Function,Params,Returns,ClassType,State From ObjectDecl;";
 	rc = sqlite3_prepare(db,_sql2, -1, &res, 0);       
 	if (rc != SQLITE_OK) {      
 		thePlugin.Log(_sql2);
@@ -55,7 +56,7 @@ int Model::Export() {
 		return 1;
 	}    
 	rc = sqlite3_step(res);  
-	thePlugin.Log("ID\t\tClassID\t\tFunction\t\tParams\t\tReturns\t\tClassType");
+	thePlugin.Log("ID\t\tClassID\t\tFunction\t\tParams\t\tReturns\t\tClassType\t\tState");
 	while (rc == SQLITE_ROW ) {
 		_result.clear();
 		_result.append((const char*)sqlite3_column_text(res, 0)).append("\t\t");
@@ -73,8 +74,13 @@ int Model::Export() {
 int Model::GetObject(const tstr* BeginsWith, const tstr* Scope, const tstr* Object,tstr* Result ) {
 	char *error=0;
 	if (Object->empty()) {
-		tstr _SQL(_T("SELECT Object from ObjectList where Scope=='"));
-		_SQL+=(*Scope)+_T("' AND Object Like('")+(*BeginsWith)+_T("%');");
+		// because output needs to be sorted, the UNION needs to be wrapped in additional SELECT
+		tstr _SQL(_T("select Col1 From (SELECT Object as Col1 from ObjectList where Scope=='"));		//is it a class-object
+		_SQL+=(*Scope)+_T("' AND Object Like('")+(*BeginsWith)+_T("%') ");
+		_SQL=_SQL+_T(" UNION ");
+		_SQL=_SQL+_T("SELECT Function as Col1 from ObjectList inner join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID where Scope=='");	//is it a SEQ-function
+		_SQL=_SQL+(*Scope)+_T("' AND Function Like('")+(*BeginsWith)+_T("%')) order by Col1 ");
+		_SQL=_SQL+_T(";");
 		sqlite3_stmt *res;
 		char _sql[MAX_PATH];
 		WideCharToMultiByte(CP_ACP, 0, _SQL.c_str(),_SQL.size()+1, _sql , MAX_PATH, NULL, NULL);
@@ -88,6 +94,7 @@ int Model::GetObject(const tstr* BeginsWith, const tstr* Scope, const tstr* Obje
 		str _result("");
 		rc = sqlite3_step(res);  
 		int i=0;
+		
 		while (rc == SQLITE_ROW && i < AC_LIST_LENGTH_MAX) {
 			_result.append((const char*)sqlite3_column_text(res, 0)).append(" ");
 			rc = sqlite3_step(res);
@@ -133,9 +140,9 @@ int Model::LoadIntelisense(const tstr*  ProjectPath) {
 	thePlugin.Log(_T("Opening db ..." ));
 	tstr _FullPath;
 	_FullPath.assign(ProjectPath->c_str());
-	_FullPath.append(tstr(_T("\\Intelisense.db")));	//<- this is the name of the Project-Database
-	char Dest[MAX_PATH];
-	WideCharToMultiByte(CP_ACP, 0, _FullPath.c_str(), wcslen(_FullPath.c_str())+1, Dest , MAX_PATH, NULL, NULL);
+	_FullPath.append(FILE_DB());	
+	char Dest[MAX_PATH*2+1];
+	WideCharToMultiByte(CP_ACP, 0, _FullPath.c_str(), wcslen(_FullPath.c_str())+1, Dest , MAX_PATH*2+1, NULL, NULL);
 
    LastError = sqlite3_open(Dest, &db);  
    if (LastError )
@@ -151,51 +158,56 @@ int Model::LoadIntelisense(const tstr*  ProjectPath) {
    return 0;
 }	
 
-/*Todo
-ifstream fin;
-  string dir, filepath;
-  int num;
-  DIR *dp;
-  struct dirent *dirp;
-  struct stat filestat;
-
-  cout << "dir to get files of: " << flush;
-  getline( cin, dir );  // gets everything the user ENTERs
-
-  dp = opendir( dir.c_str() );
-  if (dp == NULL)
-    {
-    cout << "Error(" << errno << ") opening " << dir << endl;
-    return errno;
-    }
-
-  while ((dirp = readdir( dp )))
-    {
-    filepath = dir + "/" + dirp->d_name;
-
-    // If the file is a directory (or is in some way invalid) we'll skip it 
-    if (stat( filepath.c_str(), &filestat )) continue;
-    if (S_ISDIR( filestat.st_mode ))         continue;
-
-    // Endeavor to read a single number from the file and display it
-    fin.open( filepath.c_str() );
-    if (fin >> num)
-      cout << filepath << ": " << num << endl;
-    fin.close();
-    }
-
-  closedir( dp );
-*/
-
-// Todo would be nice to run this in parallel thread
-int Model::RebuildIntelisense(const tstr*  ProjectPath) {
+int Model::RebuildClassDefinition(const tstr*  ProjectPath) {
+	thePlugin.Log(_T("Scanning Classes..."));
+	std::vector<char> _vpath = WcharMbcsConverter::tchar2char(ProjectPath->c_str());  //Todo projectpath as Model-Member
+	std::string _path(_vpath.begin(),_vpath.end()-1); // remove 00
+	//after building ObjList we now have to compile each class into ObjDecl
+	//find each entry in ObjList that is no linked to ObjDecl
+	char *error=0;
 	SeqParser _parser(this);
-	
+	struct stat _filestat;
+	str _SQL("SELECT ObjectList.ClassID as ID2,ObjectDecl.ClassID as ID1 from ObjectList ");
+	_SQL=_SQL+("Left outer join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID where ID1 IS NULL;");
+	str _filepath;
+	sqlite3_stmt *res;
+	int rc = sqlite3_prepare(db,_SQL.c_str(), -1, &res, 0);       
+    if (rc != SQLITE_OK) {   
+		thePlugin.Log(_SQL.c_str());
+		thePlugin.Log(_T("Failed to fetch data")); 
+		thePlugin.Log(sqlite3_errmsg(db));
+        return 1;
+    }    
+    rc = sqlite3_step(res);  
+    while (rc == SQLITE_ROW) {
+		_filepath.assign((const char*)sqlite3_column_text(res, 0));
+		//check if the Object exists
+		// f.e Source\Objects\Calculator\Calculator_Commander.vi
+		// -> if c:\Projects\test\Source\Objects\Calculator\Calculator_Commander.SEQ exists, open and parse it
+		int i=_filepath.rfind('.');
+		if(i==std::string::npos) continue; // no .vi
+		_filepath.replace(i,4,".seq");
+		thePlugin.Log(_filepath.c_str());
+		rc = sqlite3_step(res);
+		if (stat( (_path +_filepath).c_str(), &_filestat )) {
+			thePlugin.Log(_T("error reading file"));
+			continue;
+		}
+		if (S_ISDIR( _filestat.st_mode )) {
+			thePlugin.Log(_T("skipped because is directory"));
+			continue;
+		}
+		_parser.AnalyseFile(true,_path,_filepath);
+    }
+    sqlite3_finalize(res);
+	return 0;
+}
+// Todo would be nice to run this in parallel thread
+int Model::RebuildObjList(const tstr*  ProjectPath) {
+	thePlugin.Log(_T("Scanning SEQ..."));
+	SeqParser _parser(this);	
 	std::vector<char> _vpath = WcharMbcsConverter::tchar2char(ProjectPath->c_str());
 	std::string _path(_vpath.begin(),_vpath.end()-1); // remove 00
-	_path.append("/PRG/SEQ"); // <- all sequences should be here
-		// Todo how about subprojects
-
 	std::string _filepath;	// \subdir\test.seq
 	std::string _file;		// test.seq
 	std::string _currDir;	// \subdir
@@ -203,29 +215,32 @@ int Model::RebuildIntelisense(const tstr*  ProjectPath) {
 	struct dirent *dirp;
 	struct stat _filestat;
 	std::vector<std::string> _dirs; //stack of directories relative to _path
-	_dirs.push_back("");
+	_dirs.push_back(DIR_SEQUENCES());	// Todo how about subprojects
 	while (_dirs.size()>0) {
 		_currDir= _dirs.back();
 		_dirs.pop_back();
+		thePlugin.Log(_currDir.c_str());
 		dp=opendir((_path +_currDir).c_str());
 		if(!dp) continue;
 		while ((dirp = readdir( dp ))) {
 			_file = dirp->d_name;
-			_filepath = _path + _currDir + "/" + _file;
+			_filepath = _currDir + "\\" + _file;
 			// If the file is a directory (or is in some way invalid) we'll skip it 
-			if (stat( _filepath.c_str(), &_filestat )) continue;
 			if (_file=="." || _file=="..") continue;
+			if (stat( (_path +_filepath).c_str(), &_filestat )) continue;
 			if (S_ISDIR( _filestat.st_mode ))  {
-				_dirs.push_back(_currDir + "/" + _file);
+				_dirs.push_back(_currDir + "\\" + _file);
 				continue;
 			}
 			if (_file.substr(_file.length()-4,4)!=".seq") continue; 
-			_parser.AnalyseFile(false,_path,_file);
+			_parser.AnalyseFile(false,_path,_filepath);
 		}
+		closedir( dp );
 	}
 	return 0;
 }
 int Model::InitDatabase() {
+	thePlugin.Log(_T("Creating db..."));
 	char *error=0;
 	const char *sqlDropTable = "DROP TABLE ObjectList";
 	LastError = sqlite3_exec(db, sqlDropTable, NULL, NULL, &error);
@@ -244,7 +259,7 @@ int Model::InitDatabase() {
 		sqlite3_free(error);
 	}
 	const char *sqlCreateTable = "CREATE TABLE ObjectList ("\
-		"ID INTEGER PRIMARY KEY AUTOINCREMENT, Scope TEXT, Object TEXT, ClassID TEXT NOT NULL)";
+		"ID INTEGER PRIMARY KEY AUTOINCREMENT, Scope TEXT, Object TEXT, ClassID TEXT NOT NULL, State INT)";
 	LastError = sqlite3_exec(db, sqlCreateTable, NULL, NULL, &error);
 	if (LastError)
 	{
@@ -254,7 +269,7 @@ int Model::InitDatabase() {
 		return 1;
 	}
 	sqlCreateTable = "CREATE TABLE ObjectDecl ("\
-		"ID INTEGER PRIMARY KEY AUTOINCREMENT, ClassID TEXT NOT NULL, Function TEXT NOT NULL, Params TEXT, Returns TEXT, ClassType INT)";
+		"ID INTEGER PRIMARY KEY AUTOINCREMENT, ClassID TEXT NOT NULL, Function TEXT NOT NULL, Params TEXT, Returns TEXT, ClassType INT, State INT)";
 	LastError = sqlite3_exec(db, sqlCreateTable, NULL, NULL, &error);
 	if (LastError)
 	{
@@ -263,6 +278,7 @@ int Model::InitDatabase() {
 		sqlite3_free(error);
 		return 1;
 	}
+	thePlugin.Log(_T("db ready"));
 	// add some test data 
 	/*
 	UpdateObjList(Obj("Main.seq","Calc","Calculator"));
@@ -288,12 +304,13 @@ int Model::UpdateObjList(Obj& theObj) {
 		_SQL= ("Update ObjectList Set Scope='" +theObj.Scope() +
 			"',Object='"+theObj.Name()+
 			"',ClassID='"+theObj.ClassID()+
-			"' where ID="+std::to_string((long long)theObj.ID()) );
+			"',State=1"+
+			" where ID="+std::to_string((long long)theObj.ID()) );
 	}else {
-		_SQL = ("INSERT INTO ObjectList (Scope , Object , ClassID) VALUES('");
+		_SQL = ("INSERT INTO ObjectList (Scope , Object , ClassID, State) VALUES('");
 		_SQL.append(theObj.Scope()).append("', '").append(theObj.Name()).append("', '").append(theObj.ClassID());
-		//append(std::to_string((long long)theObj.ClassID()));
-		_SQL.append("');");
+		_SQL.append("',").append("1");
+		_SQL.append(");");
 	}
    LastError = sqlite3_exec(db, _SQL.c_str(), NULL, NULL, &error);
    if (LastError)
@@ -338,14 +355,16 @@ int Model::UpdateObjDecl(ObjDecl& theObj) {
 	if(theObj.ID()>0) {
 		_SQL= ("Update ObjectDecl Set ClassID='" +theObj.ClassID() +
 			"',Function='"+theObj.Function()+
-			"',Params="+theObj.Params()+
-			"',Returns="+theObj.Returns()+
+			"',Params='"+theObj.Params()+
+			"',Returns='"+theObj.Returns()+
 			"',ClassType="+std::to_string((long long)theObj.ClassType())+
+			" ,State=1"+
 			" where ID="+std::to_string((long long)theObj.ID()) );
 	}else {
-		_SQL = ("INSERT INTO ObjectDecl (ClassID, Function, Params, Returns, ClassType) VALUES('");
+		_SQL = ("INSERT INTO ObjectDecl (ClassID, Function, Params, Returns, ClassType, State) VALUES('");
 		_SQL.append(theObj.ClassID()).append("', '").append(theObj.Function()).append("', '").append(theObj.Params());
 		_SQL.append("', '").append(theObj.Returns()).append("', ").append(std::to_string((long long)theObj.ClassType()));
+		_SQL.append(",1");
 		_SQL.append(");");
 	}
    LastError = sqlite3_exec(db, _SQL.c_str(), NULL, NULL, &error);
