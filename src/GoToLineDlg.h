@@ -43,6 +43,7 @@ public :
 		_hParent = parent2set;
 	};
 	void PrintLog(const TCHAR* pszText) {
+		if(m_Log.length()>1000) m_Log.clear();
 		m_Log.append(pszText);
 		m_Log.append(_T("\r\n"));
 		//Todo cutoff log

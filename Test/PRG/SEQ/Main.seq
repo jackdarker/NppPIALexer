@@ -2,9 +2,10 @@
 #include subfunctions\Functions.seq
 
 #using "Source\Objects\Calculator\Calculator_Commander.vi" as Calc
-#using "Source\Objects\Calibrator\Calibrator Commander.vi" as Cal
+#using "Source\Objects\Calibrator\Calibrator Commander.vi" as llos
 
 function Homing() -> bool bReturn, string sText
 {
 	bool bOK=true;
 }
+  Homing(    Calcll lll )

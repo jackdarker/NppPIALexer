@@ -9,12 +9,12 @@ extern CNppPIALexer thePlugin;
 //??Todo using sqlite with UTF8, should switch to UTF16 since UNICODE is declared? 
 
 Model::Model(){
-	thePlugin.Log(_T("model constructor"));
+	//thePlugin.Log(_T("model constructor"));
 }
 
 Model::~Model(){
 	if(db) sqlite3_close(db);
-	thePlugin.Log(_T("model destructor"));
+	//thePlugin.Log(_T("model destructor"));
 }
 void Model::HandleDBError() {
 	thePlugin.Log(_T("Error SQLite3 database"));
@@ -74,19 +74,20 @@ int Model::Export() {
 int Model::GetObject(const tstr* BeginsWith, const tstr* Scope, const tstr* Object,tstr* Result ) {
 	char *error=0;
 	if (Object->empty()) {
-		// because output needs to be sorted, the UNION needs to be wrapped in additional SELECT
+		// because output needs to be sorted, the UNION needs to be wrapped in additional SELECT for ordering
 		tstr _SQL(_T("select Col1 From (SELECT Object as Col1 from ObjectList where Scope=='"));		//is it a class-object
 		_SQL+=(*Scope)+_T("' AND Object Like('")+(*BeginsWith)+_T("%') ");
 		_SQL=_SQL+_T(" UNION ");
 		_SQL=_SQL+_T("SELECT Function as Col1 from ObjectList inner join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID where Scope=='");	//is it a SEQ-function
-		_SQL=_SQL+(*Scope)+_T("' AND Function Like('")+(*BeginsWith)+_T("%')) order by Col1 ");
+		_SQL=_SQL+(*Scope)+_T("' AND ClassType==")+ std::to_wstring((long long)tCTSeq) +_T(" AND Function Like('")+(*BeginsWith)+_T("%')) order by Col1 ");
+		//Todo is it a variable of basic type
 		_SQL=_SQL+_T(";");
 		sqlite3_stmt *res;
-		char _sql[MAX_PATH];
-		WideCharToMultiByte(CP_ACP, 0, _SQL.c_str(),_SQL.size()+1, _sql , MAX_PATH, NULL, NULL);
-		int rc = sqlite3_prepare(db,_sql, -1, &res, 0);       
+
+		std::vector<char>_sql=WcharMbcsConverter::wchar2char(_SQL.c_str());
+		int rc = sqlite3_prepare(db,&_sql[0], -1, &res, 0);       
 		if (rc != SQLITE_OK) {      
-			thePlugin.Log(_sql);
+			thePlugin.Log(&_sql[0]);
 			thePlugin.Log(_T("Failed to fetch data")); 
 			thePlugin.Log(sqlite3_errmsg(db));
 			return 1;
@@ -96,13 +97,13 @@ int Model::GetObject(const tstr* BeginsWith, const tstr* Scope, const tstr* Obje
 		int i=0;
 		
 		while (rc == SQLITE_ROW && i < AC_LIST_LENGTH_MAX) {
-			_result.append((const char*)sqlite3_column_text(res, 0)).append(" ");
+			if (!_result.empty()) _result.append(" ");
+			_result.append((const char*)sqlite3_column_text(res, 0));
 			rc = sqlite3_step(res);
 			i=i+1;
 		}
 		sqlite3_finalize(res);
-		std::vector<wchar_t> buf=WcharMbcsConverter::char2wchar(_result.c_str());
-		Result->assign(tstr(buf.begin(),buf.end()));
+		Result->assign(WcharMbcsConverter::char2wcharStr(_result.c_str()));
 		return 0;
 	} else {
 		return GetFunction(BeginsWith,Scope,Object,Result);
@@ -114,11 +115,12 @@ int Model::GetFunction(const tstr* BeginsWith, const tstr* Scope, const tstr* Ob
 	tstr _SQL(_T("SELECT Function from ObjectList inner join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID where Scope=='"));
 	_SQL+=(*Scope)+_T("' AND Object=='")+(*Object)+_T("' order by Function;");
 	sqlite3_stmt *res;
-	char _sql[MAX_PATH];
-	WideCharToMultiByte(CP_ACP, 0, _SQL.c_str(),_SQL.size()+1, _sql , MAX_PATH, NULL, NULL);
-	int rc = sqlite3_prepare(db,_sql, -1, &res, 0);       
+	//char _sql[MAX_PATH];
+	//WideCharToMultiByte(CP_ACP, 0, _SQL.c_str(),_SQL.size()+1, _sql , MAX_PATH, NULL, NULL);
+	std::vector<char>_sql=WcharMbcsConverter::wchar2char(_SQL.c_str());
+	int rc = sqlite3_prepare(db,&_sql[0], -1, &res, 0);       
     if (rc != SQLITE_OK) {      
-		thePlugin.Log(_sql);
+		thePlugin.Log(&_sql[0]);
 		thePlugin.Log(_T("Failed to fetch data")); 
 		thePlugin.Log(sqlite3_errmsg(db));
         return 1;
@@ -127,13 +129,13 @@ int Model::GetFunction(const tstr* BeginsWith, const tstr* Scope, const tstr* Ob
     rc = sqlite3_step(res);  
 	int i=0;
     while (rc == SQLITE_ROW && i < AC_LIST_LENGTH_MAX) {
-		_result.append((const char*)sqlite3_column_text(res, 0)).append(" ");
+		if (!_result.empty()) _result.append(" ");
+		_result.append((const char*)sqlite3_column_text(res, 0));
 		rc = sqlite3_step(res);
 		i=i+1;
     }
     sqlite3_finalize(res);
-	std::vector<wchar_t> buf=WcharMbcsConverter::char2wchar(_result.c_str());
-	Result->assign(tstr(buf.begin(),buf.end()));
+	Result->assign(WcharMbcsConverter::char2wcharStr(_result.c_str()));
 	return 0;
 }
 int Model::LoadIntelisense(const tstr*  ProjectPath) {
@@ -141,21 +143,20 @@ int Model::LoadIntelisense(const tstr*  ProjectPath) {
 	tstr _FullPath;
 	_FullPath.assign(ProjectPath->c_str());
 	_FullPath.append(FILE_DB());	
-	char Dest[MAX_PATH*2+1];
-	WideCharToMultiByte(CP_ACP, 0, _FullPath.c_str(), wcslen(_FullPath.c_str())+1, Dest , MAX_PATH*2+1, NULL, NULL);
-
-   LastError = sqlite3_open(Dest, &db);  
-   if (LastError )
-   {
-      HandleDBError();
-      return 1;
-   }
-   LastError = InitDatabase();
-   if (LastError ) {
-	   return 1;
-   }
-   
-   return 0;
+	//char Dest[MAX_PATH*2+1];
+	//WideCharToMultiByte(CP_ACP, 0, _FullPath.c_str(), wcslen(_FullPath.c_str())+1, Dest , MAX_PATH*2+1, NULL, NULL);
+	std::vector<char> Dest=WcharMbcsConverter::wchar2char(_FullPath.c_str());
+	LastError = sqlite3_open(&Dest[0], &db);  
+	if (LastError )
+	{
+		HandleDBError();
+		return 1;
+	}
+	LastError = InitDatabase();
+	if (LastError ) {
+		return 1;
+	}
+	return 0;
 }	
 
 int Model::RebuildClassDefinition(const tstr*  ProjectPath) {
@@ -166,7 +167,6 @@ int Model::RebuildClassDefinition(const tstr*  ProjectPath) {
 	//find each entry in ObjList that is no linked to ObjDecl
 	char *error=0;
 	SeqParser _parser(this);
-	struct stat _filestat;
 	str _SQL("SELECT ObjectList.ClassID as ID2,ObjectDecl.ClassID as ID1 from ObjectList ");
 	_SQL=_SQL+("Left outer join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID where ID1 IS NULL;");
 	str _filepath;
@@ -181,22 +181,7 @@ int Model::RebuildClassDefinition(const tstr*  ProjectPath) {
     rc = sqlite3_step(res);  
     while (rc == SQLITE_ROW) {
 		_filepath.assign((const char*)sqlite3_column_text(res, 0));
-		//check if the Object exists
-		// f.e Source\Objects\Calculator\Calculator_Commander.vi
-		// -> if c:\Projects\test\Source\Objects\Calculator\Calculator_Commander.SEQ exists, open and parse it
-		int i=_filepath.rfind('.');
-		if(i==std::string::npos) continue; // no .vi
-		_filepath.replace(i,4,".seq");
-		thePlugin.Log(_filepath.c_str());
 		rc = sqlite3_step(res);
-		if (stat( (_path +_filepath).c_str(), &_filestat )) {
-			thePlugin.Log(_T("error reading file"));
-			continue;
-		}
-		if (S_ISDIR( _filestat.st_mode )) {
-			thePlugin.Log(_T("skipped because is directory"));
-			continue;
-		}
 		_parser.AnalyseFile(true,_path,_filepath);
     }
     sqlite3_finalize(res);

@@ -19,9 +19,9 @@ const char* CNppPIALexer::strBrackets[tbtCount - 1] = {
     "<>",
     "</>"
 };
-
+// Todo is it possible to replace char[MAX_PATH] with something safe?
 char charbuf[MAX_PATH];
-TCHAR tcharbuf[MAX_PATH];
+TCHAR tcharbuf[MAX_PATH*2+1];
 std::vector<wchar_t> wcharbuf;
 
 bool CNppPIALexer::isNppMacroStarted = false;
@@ -376,34 +376,33 @@ void CNppPIALexer::OnSciCharAdded(const int ch)
     if ( nSelections > 1 )
         return; // nothing to do with multiple selections
 	LRESULT x;
+
 	switch ( ch )
     {
-		case _TCH('.') :
-		case _TCH('(') :
+		case _TCH('.') : // after objectname
 			ResetAutoComplete();	
-			//x=sciMsgr.SendSciMsg(SCI_AUTOCSETDROPRESTOFWORD,(WPARAM) 1,(LPARAM)0);
 			m_CurrPos = sciMsgr.getCurrentPos();
 			_wordStart=sciMsgr.getWordStartPos(m_CurrPos-1,true);
 			sciMsgr.getTextRange(_wordStart,m_CurrPos-1,charbuf);
-			wcharbuf=WcharMbcsConverter::char2wchar(charbuf);
-			m_Object->assign(tstr(wcharbuf.begin(),wcharbuf.end()-1));
+			m_Object->assign(WcharMbcsConverter::char2wcharStr(charbuf));
 			//m_nppMsgr.getCurrentWord(MAX_PATH,prevword); doesnt return correct word?
             break;
+		case _TCH('(') :
+			//??x=sciMsgr.SendSciMsg(SCI_CALLTIPSHOW,(WPARAM)(m_CurrPos),(LPARAM)"1234\n678"); Todo
 		case _TCH(' ') :
 		case _TCH('\x0D') :
 		case _TCH('\x0A') :
-		case _TCH('\t') :
+		case _TCH('\x09') : //tab not transmitted by NPP?
             ResetAutoComplete();	
             break;
 		default:
-			wchar_t y=WcharMbcsConverter::char2wchar((char)ch);
-			
-			m_Search->append(&y,1); 
+			m_CurrPos = sciMsgr.getCurrentPos();
+			_wordStart=sciMsgr.getWordStartPos(m_CurrPos,true);
+			sciMsgr.getTextRange(_wordStart,m_CurrPos,charbuf);
+			m_Search->assign(WcharMbcsConverter::char2wcharStr(charbuf));
 			m_Model->GetObject(m_Search,m_File,m_Object,m_Found);
 			std::vector<char> utf8buf =WcharMbcsConverter::tchar2char(m_Found->c_str());
-			//LRESULT x=sciMsgr.SendSciMsg(SCI_AUTOCSHOW,(WPARAM) length, (LPARAM) strAC);
-			if(utf8buf.size()>1){ //ends always with 0x00 
-				m_CurrPos = sciMsgr.getCurrentPos();
+			if(utf8buf.size()>1){ //ends always with 0x00 Todo 
 				_wordStart=sciMsgr.getWordStartPos(m_CurrPos-1,true);
 				x=sciMsgr.SendSciMsg(SCI_AUTOCSHOW,(WPARAM)(m_CurrPos-_wordStart),(LPARAM)&utf8buf[0]);
 			}

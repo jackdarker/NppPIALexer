@@ -1,22 +1,42 @@
 #include "SeqParser.h"
+#include "NppPIALexer.h"
 
+extern CNppPIALexer thePlugin;
 // BasePath = c:\projects\xyz
-// RelFilePath =			\prg\seq\default\Main.seq
+// RelFilePath =			\prg\seq\default\Main.seq  or Main.xxx
 
 int SeqParser::AnalyseFile(bool IsClassDefinition, std::string BasePath,std::string RelFilePath){ 
 	std::ifstream _filestream;
 	std::string Path;
 	m_RelFilePath = RelFilePath;
+	m_DescFilePath = RelFilePath;
 	m_BasePath = BasePath;
 	m_IsClassDefinition = IsClassDefinition;
 	
+	struct stat _filestat;
+	int i=m_DescFilePath.rfind('.');
+	if(i==std::string::npos) return 1; // no .xxx
+	m_DescFilePath.replace(i,4,".seq");
 	//Todo make this really a relative path
-	Path.append(m_BasePath).append("\\").append(m_RelFilePath);
+	Path.append(m_BasePath).append("\\").append(m_DescFilePath);
+	thePlugin.Log(m_DescFilePath.c_str());	
+	//check if the Object exists
+	// f.e Source\Objects\Calculator\Calculator_Commander.vi
+	// -> if c:\Projects\test\Source\Objects\Calculator\Calculator_Commander.SEQ exists, open and parse it
+	if (stat( Path.c_str(), &_filestat )) {
+		thePlugin.Log(_T("error reading file"));
+		return 1;
+	}
+	if (S_ISDIR( _filestat.st_mode )) {
+		thePlugin.Log(_T("skipped because is directory"));
+		return 1;
+	}
 	_filestream.open(Path,std::ios::in);
 	if (_filestream.fail()) {
 		return 1;
 	}
-	m_Model->UpdateObjList(Model::Obj(m_RelFilePath,m_RelFilePath,m_RelFilePath)); //each SEQ includes itself
+	if(!m_IsClassDefinition) 
+		m_Model->UpdateObjList(Model::Obj(m_RelFilePath,m_RelFilePath,m_RelFilePath)); //each SEQ includes itself
 
 	std::string buffer;
 	while (std::getline(_filestream, buffer)) { 
@@ -31,7 +51,7 @@ int SeqParser::ParseLine(std::string Line) {
 	std::string _A;
 	std::string _B;
 	std::string _C;
-	Line = SeqParser::RemoveSpaces(Line); //could cause issue with filepaths containing spaces?
+	Line = SeqParser::RemoveSpaces(Line); //Todo could cause issue with filepaths containing spaces?
 	int _foundComment=Line.find("//",_offset);
 	if (_foundComment!= std::string::npos) { // Todo skip if comment
 	}
@@ -62,7 +82,7 @@ int SeqParser::ParseLine(std::string Line) {
 					_A,_B,_C));
 			}
 		}
-
 	}
+	// Todo parse basic type
 	return 0;
 }

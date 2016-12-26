@@ -74,11 +74,26 @@ public:
 			static std::string foo("\\PRG\\SEQ");
 			return foo;
 		}
+		static const tstr& FILE_SEQ(){	//<- this is the extension of Sequences
+			static tstr foo(_T(".seq"));
+			return foo;
+		}
 		static const tstr& FILE_DB(){	//<- this is the name of the Project-Database relative to project
 			static tstr foo(_T("\\Intelisense.db"));
 			return foo;
 		}
-        Model();
+		static const std::vector<str>& BASIC_TYPES() { //list all "basic" types; dont forget the space
+			static std::vector<str> foo;
+			if (foo.empty()) {
+				foo.push_back("bool ");
+				foo.push_back("double ");
+				foo.push_back("int ");
+				foo.push_back("string ");
+				foo.push_back("variant ");
+			}
+			return foo;
+		}
+		Model();
         ~Model();
 
 		//Loads Data from Database; if there is none, rebuildObjList is called

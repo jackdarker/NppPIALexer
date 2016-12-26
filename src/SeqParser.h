@@ -78,7 +78,8 @@ public:
 private:
 	Model *m_Model;
 	std::string m_BasePath;
-	std::string m_RelFilePath;
+	std::string m_RelFilePath;	// this is the seq-file or Class-File
+	std::string m_DescFilePath; // this is the original seq-file or the description-file for Class
 	bool m_IsClassDefinition;
 	int ParseLine(std::string Line);
 	PFN OnInclude;

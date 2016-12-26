@@ -177,9 +177,9 @@ void CNppPIALexerOptions::ReadOptions(const TCHAR* szIniFilePath)
         m_sFileExtsRule = &szTempExts[i];
     }
 
-	TCHAR _temp[MAX_PATH];
+	TCHAR _temp[MAX_PATH*2+1];
 	::GetPrivateProfileString( _T("Last"), _T("Project"), 
-        m_LastProject.c_str(), _temp, MAX_PATH, szIniFilePath );
+        m_LastProject.c_str(), _temp, MAX_PATH*2, szIniFilePath );
     m_LastProject.assign(_temp );
 }
 
