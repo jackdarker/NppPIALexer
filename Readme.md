@@ -1,19 +1,29 @@
-***********************************************
+**********************************************************************************************
 * NppPIALexer-Plugin for Notepad++ 5.9 (and above)
-* by JK, 20016..
-***********************************************
+* by JK, 20016.
+**********************************************************************************************
+This plugin creates Intelisense data for PIA-Framework-projects and provides it for Auto-complete operations in the editor.
 ________________________________________________________________________________________________________________
 Links
 ________________________________________________________________________________________________________________
+uses http://www.sqlite.org for database (included as .h )
+uses https://github.com/tronkko/dirent for directory-browsing (included as .h )
+
 http://www.cplusplus.com/reference/cstring/
 https://www.tutorialspoint.com/sqlite/sqlite_data_types.htm
 
-http://www.sqlite.org
-https://github.com/tronkko/dirent
-
 http://docs.notepad-plus-plus.org/index.php/Messages_And_Notifications
 http://www.scintilla.org/ScintillaDoc.html#Notifications
+________________________________________________________________________________________________________________
+Installation
+________________________________________________________________________________________________________________
+) NppPIALexer.dll nach .../Npp/plugins kopieren
 
+) unter Plugins->NppPIALexer->ControlCenter Project-Pfad eingeben
+
+) Reload Data zum erzeugen der Intelisense drücken
+
+) log-file wird gespeichert in .../Npp/NppPIALexer.log
 ________________________________________________________________________________________________________________
 Erzeugen der Intelisense
 ________________________________________________________________________________________________________________
@@ -40,6 +50,7 @@ Scope		TEXT
 Object		TEXT
 ClassID		TEXT    NOT NULL
 State		INT
+Time		INT					<= Zeitstempel als Sekunden seit Mitternacht des 1. Januar 1970
 
 Tabelle ObjectDecl
 ID		INT PRIMARY KEY     AUTOINCREMENT
@@ -51,9 +62,12 @@ ReturnList	TEXT
 Descr		TEXT
 State		INT
 
-Bedeutung von State: 
+) Bedeutung von State: 
 	0 = Objekt nicht auffindbar (d.h. eventuel aus DB löschen)
 	1 = Objekt existiert 
+
+) Verknüpfung der Tabellen über:
+SELECT * from ObjectList inner join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID;
 
 z.B. ObjectList
 Scope		Object	ClassID		
@@ -76,6 +90,7 @@ Functions.seq	Seq		CloseDoor	(bool bClose)		-> bool OK
 Main.seq	Seq		Main
 bool		Typ
 string		Typ
+
 
 ________________________________________________________________________________________________________________
 Abrufen von Intelisense
@@ -112,7 +127,7 @@ ________________________________________________________________________________
 Import von Klassen-Intelisense		
 ________________________________________________________________________________________________________________
 ) wird im Object gespeichert
-	Objects\calculator\doc\help.txt
+	Objects\calculator\xyz_Commander.seq
 
 ) gleicher Syntax wie in .seq als Funktionsdeklaration
 	//desc: returns the logical AND of 2 variables

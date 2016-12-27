@@ -10,7 +10,7 @@
 class Model
 {
 public:
-	enum TClassType {
+	enum TClassType { 
             tCTClass = 0,
 			tCTSeq =1,
 			tCTType=2

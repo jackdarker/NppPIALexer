@@ -51,10 +51,8 @@ int SeqParser::ParseLine(std::string Line) {
 	std::string _A;
 	std::string _B;
 	std::string _C;
+	Line = SeqParser::RemoveComment(Line);
 	Line = SeqParser::RemoveSpaces(Line); //Todo could cause issue with filepaths containing spaces?
-	int _foundComment=Line.find("//",_offset);
-	if (_foundComment!= std::string::npos) { // Todo skip if comment
-	}
 	if ((_found=Line.find("#using ",_offset),_found != std::string::npos)) {
 		//   #using "sfswf\sf\Calculator_Commander.vi" as Calc
 		_offset = _offset+_found+8; // after #using "
@@ -82,7 +80,26 @@ int SeqParser::ParseLine(std::string Line) {
 					_A,_B,_C));
 			}
 		}
+	} else {// Todo parse basic type
+		// double fVolt=1.2
+		std::vector<str>::const_iterator _Iter=Model::BASIC_TYPES().begin();
+		for ( ; _Iter != Model::BASIC_TYPES().end( ); _Iter++ ) {
+			_found=Line.find(*_Iter,0);
+			if (_found==0) { //datatype should be at start of line, not in between ()
+				_A=*_Iter;
+				_A.resize(_A.length()-1); // strip off space
+				_foundB = _found+(_Iter->length());
+				_foundC = Line.find('=',_foundB);	// double fVolt=2.5
+				if (_foundC == std::string::npos) {
+					_foundC = Line.find(';',_foundB);	// int iX;		
+					if (_foundC == std::string::npos) {
+						_foundC=Line.length(); // int iX<lf>
+					}
+				} 
+				_B=Line.substr(_foundB,_foundC-_foundB);
+				m_Model->UpdateObjList(Model::Obj(m_RelFilePath,_B,_A));
+			}
+		}
 	}
-	// Todo parse basic type
 	return 0;
 }

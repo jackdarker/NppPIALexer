@@ -1,11 +1,20 @@
-#include test1.seq
-#include subfunctions\Functions.seq
+﻿#include test1.seq
+#include subfunctions\Functions.seq	//include from sub-directory
 
 #using "Source\Objects\Calculator\Calculator_Commander.vi" as Calc
 #using "Source\Objects\Calibrator\Calibrator Commander.vi" as llos
 
-function Homing() -> bool bReturn, string sText
+double fVolt;
+int iX=2
+//string sText2 
+string sText=" für Kommentar // einfügen" //that was not a comment
+//descr: Grundstellungsfahrt
+function Homing() -> bool bReturn, string sText //another Comment
 {
 	bool bOK=true;
 }
-  Homing(    Calcll lll )
+
+function Main()
+{
+	iX=2/3;	
+} 
