@@ -1,0 +1,5 @@
+
+function SetVoltage(double fVolt, double fCurr)->
+function SetVoltage(double fVolt) ->
+function GetVoltage() ->double fVolt, double fCurr
+function GetVoltage() ->double fVolt

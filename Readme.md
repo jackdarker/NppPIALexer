@@ -50,7 +50,12 @@ Scope		TEXT
 Object		TEXT
 ClassID		TEXT    NOT NULL
 State		INT
-Time		INT					<= Zeitstempel als Sekunden seit Mitternacht des 1. Januar 1970
+
+Tabelle ObjectLinks
+ID		INT PRIMARY KEY     AUTOINCREMENT
+ID_ObjectList	INT		
+ID_ObjectDecl	INT
+State		INT
 
 Tabelle ObjectDecl
 ID		INT PRIMARY KEY     AUTOINCREMENT
@@ -61,6 +66,7 @@ ParameterList	TEXT
 ReturnList	TEXT    
 Descr		TEXT
 State		INT
+Time		INT					<= Zeitstempel als Sekunden seit Mitternacht des 1. Januar 1970
 
 ) Bedeutung von State: 
 	0 = Objekt nicht auffindbar (d.h. eventuel aus DB löschen)
@@ -68,30 +74,47 @@ State		INT
 
 ) Verknüpfung der Tabellen über:
 SELECT * from ObjectList inner join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID;
+?? aber Main.seq -> Functions.seq -> StandardObj.seq -> Trace
+SELECT * from ObjectLinks inner join ObjectList on ObjectList.ID==ObjectLinks.ID_ObjectList inner join ObjectDecl on ObjectDecl.ID==ObjectLinks.ID_ObjectDecl;
 
 z.B. ObjectList
 Scope		Object	ClassID		
 ---------------------------------------------------------------------------------------------------------------------------------
-Main.seq	Calc	Calculator			<= Definition Objekt-Klasse
-Main.seq	Functions.seq	Functions.seq			<= Funktion in include-sequenz
-Functions.seq	Functions.seq	Functions.seq			<= Funktion in dieser sequenz
-Main.seq	Main.seq	Main.seq
-Main.seq	bOK	bool				<= Variable in dieser Sequenz (global)
-Main.seq::Main	sText	string				<= Variable in dieser Funktion (lokal)
+1 Main.seq	Calc	Calculator			<= Definition Objekt-Klasse
+2 Main.seq	Functions.seq	Functions.seq			<= Funktion in include-sequenz
+3 Functions.seq	Functions.seq	Functions.seq			<= Funktion in dieser sequenz
+4 Main.seq	Main.seq	Main.seq
+5 Main.seq	bOK	bool				<= Variable in dieser Sequenz (global)
+6 Main.seq::Main	sText	string				<= Variable in dieser Funktion (lokal)
+7 Functions.seq	Trace	PrehTrace
 
 z.B. ObjectDecl
 ClassID		ClassType	Function	ParameterList		ReturnList		Descr
 ---------------------------------------------------------------------------------------------------------------------------------
-Calculator	Class		boolAnd		(bool A,bool B)		-> bool X		x = A & B
-Calculator	Class		floatEquals	(float A, float B)	-> bool X
-Preh_Trace	Class		CheckSNState	(string SN,string Type)	-> bool OK ,[string ACK]
-Functions.seq	Seq		Homing		()			-> bool OK, string Text
-Functions.seq	Seq		CloseDoor	(bool bClose)		-> bool OK
-Main.seq	Seq		Main
-bool		Typ
-string		Typ
+10 Calculator	Class		boolAnd		(bool A,bool B)		-> bool X		x = A & B
+11 Calculator	Class		floatEquals	(float A, float B)	-> bool X
+12 Preh_Trace	Class		CheckSNState	(string SN,string Type)	-> bool OK ,string ACK
+13 Preh_Trace	Class		CheckSNState	(string SN     )	-> bool OK 
+14 Functions.seq	Seq	Homing		()			-> bool OK, string Text
+15 Functions.seq	Seq	CloseDoor	(bool bClose)		-> bool OK
+16 Main.seq	Seq		Main
+17 bool		Typ
+18 string	Typ
 
-
+z.B. ObjectLinks
+ID_ObjectList	ID_ObjectDecl
+---------------------------------------------------------------------------------------------------------------------------------
+1		10
+1		11
+3		14
+3		15
+3		12
+3		13
+2		3	weil Main.seq auf Functions.seq verweist...
+2		14	müssen deren Variablen auch der Main.seq zugeordnet werden
+2		15
+2		12
+2		13
 ________________________________________________________________________________________________________________
 Abrufen von Intelisense
 ________________________________________________________________________________________________________________

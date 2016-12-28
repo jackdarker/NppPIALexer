@@ -74,6 +74,11 @@ BOOL CALLBACK DemoDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam)
 					//this->DlgItem_SetText(_hSelf,ID_GOLINE_MSG,  thePlugin.getDllFileName());
 					return TRUE;
 				}
+				case ID_GOLINE_UPDATE :
+				{
+					thePlugin.UpdateData();
+					return TRUE;
+				}
 				case ID_GOLINE_EXPORT :
 				{
 					thePlugin.ExportIntelisense();

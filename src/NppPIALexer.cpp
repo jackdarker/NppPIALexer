@@ -552,8 +552,12 @@ void CNppPIALexer::ReloadData(const tstr*  ProjectPath)
 	m_DockDlg.PrintLog(_T("Loading sucessful"));
 	g_opt.m_LastProject=ProjectPath->c_str();
 	SaveOptions();
-	m_Model->RebuildObjList(ProjectPath);
-	m_Model->RebuildClassDefinition(ProjectPath);
+	
+	m_Model->RebuildObjList();
+	m_Model->RebuildClassDefinition();
+}
+void CNppPIALexer::UpdateData()
+{
 }
 void  CNppPIALexer::ExportIntelisense() {
 	if(!m_Model) return;

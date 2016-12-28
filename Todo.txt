@@ -1,4 +1,6 @@
-// brauchen wir Tabellen-Indexe?
+//-> wenn Main.seq test1.seq included, m¸ssen in main.seq auch die using-verweise und Variablen sichtbar sein
+
+//-> brauchen wir Tabellen-Indexe?
 
 //-> das parsen der Seq dauert lang - warum?
 nur sequencen neu parsen mit ge‰nderten Timestamp?
@@ -6,7 +8,7 @@ SELECT strftime('%Y%m%d %H:%M:%S','now');
 
 //-> Suche nur nach eingabe von n Zeichen starten und nicht wenn innerhalb Kommentar oder ""; sonst werden dauernd Suchanfragen geschickt
 
-//-> variablen werden auch auﬂerhalb ihres lokalen Raums vorgeschlagen
+//-> variablen werden auch auﬂerhalb ihres lokalen Raums vorgeschlagen, wie l‰sst sich das vermeiden?
 
 //-> Groﬂ/Kleinschreibung bei Suche ignorieren??
 

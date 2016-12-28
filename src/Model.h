@@ -104,10 +104,10 @@ public:
 		//if there is no Database new one is created
 		//parses all SEQ for Obj-definitions and in-sequence-functions of the current working directory
 		//calls RebuildClassDefinition 
-		int RebuildObjList(const tstr*  ProjectPath);
+		int RebuildObjList();
 
 		//search for data of classes (declaration of functions)
-		int RebuildClassDefinition(const tstr*  ProjectPath);
+		int RebuildClassDefinition();
 
 		//setup a projectdatabase for intelisense; if there is one it will be overwritten
 		int InitDatabase() ;
@@ -127,10 +127,14 @@ public:
 		// -> setzt checkedMarker=false in jedem eintrag
 		// -> RebuildIntelisense wird aufgerufen, was checkedMarker=true setzt für jeden Eintrag der bestätigt wird
 		// -> CleanupDeadLink löscht alle wo immer noch checkedMarker==false
-		int CleanupDeadLinks() {return 0;};
+		int PrepareForUpdate() ;
+		int CleanupDeadLinks() ;
 		int RefreshObjListID(Obj& theObj);
 		int RefreshObjDeclID(ObjDecl& theObj);
+		int ExecuteSimpleQuery( str SQL);
 		void HandleDBError() ;
+
+		str m_ProjectPath;
 
 };
 

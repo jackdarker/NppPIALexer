@@ -92,6 +92,7 @@ class CNppPIALexer : public CNppPlugin
 		void Log(const char* log);
 		void ReloadData(const tstr*  ProjectPath);
 		void ReloadData(const TCHAR*  ProjectPath);
+		void UpdateData();
 
     protected:
         // custom functions

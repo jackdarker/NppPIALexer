@@ -121,8 +121,7 @@ int Model::GetFunction(const tstr* BeginsWith, const tstr* Scope, const tstr* Ob
 	tstr _SQL(_T("SELECT Function from ObjectList inner join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID where Scope=='"));
 	_SQL+=(*Scope)+_T("' AND Object=='")+(*Object)+_T("' order by Function;");
 	sqlite3_stmt *res;
-	//char _sql[MAX_PATH];
-	//WideCharToMultiByte(CP_ACP, 0, _SQL.c_str(),_SQL.size()+1, _sql , MAX_PATH, NULL, NULL);
+
 	std::vector<char>_sql=WcharMbcsConverter::wchar2char(_SQL.c_str());
 	int rc = sqlite3_prepare(db,&_sql[0], -1, &res, 0);       
     if (rc != SQLITE_OK) {      
@@ -147,6 +146,7 @@ int Model::GetFunction(const tstr* BeginsWith, const tstr* Scope, const tstr* Ob
 int Model::LoadIntelisense(const tstr*  ProjectPath) {
 	thePlugin.Log(_T("Opening db ..." ));
 	tstr _FullPath;
+	m_ProjectPath.assign(WcharMbcsConverter::wchar2charStr(ProjectPath->c_str()));
 	_FullPath.assign(ProjectPath->c_str());
 	_FullPath.append(FILE_DB());	
 	//char Dest[MAX_PATH*2+1];
@@ -164,10 +164,93 @@ int Model::LoadIntelisense(const tstr*  ProjectPath) {
 	}
 	return 0;
 }	
-// Todo would be nice to run this in parallel thread
-int Model::RebuildObjList(const tstr*  ProjectPath) {
-	thePlugin.Log(_T("Scanning SEQ..."));
+// marks every entry that needs to be updated
+int Model::PrepareForUpdate() {
+	str _SQL;
+	_SQL.assign("Update ObjectList Set State=0");
+	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
+	_SQL.assign("Update ObjectDecl Set State=0");
+	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
+	return 0;
+}
+//deletes entrys that are not valid anymore and recreates new
+int Model::CleanupDeadLinks() {
+	//nachdem wir die Klassendeklarationen importiert haben 
+	// müssen die Links von der Seq auf die Klasse neu erstellt werden
+	// Main.seq-> Calc -> Calculator
+	// aber auch tiefer verlinkt
+	// Main.seq->test.seq->functions.seq-> Trace-> PrehTrace
+	// zu Main.seq -> Trace -> PrehTrace
+	char *error=0;
+	int rc;
+	sqlite3_stmt *res;
+	str _SQL,_SQLSelect;
+	//clear the old data
+	_SQL.assign("delete from ObjectLinksTemp;");
+	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
+	_SQL.assign("delete from ObjectLinks;");
+	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
+	
+	//erstmal die einfachen Verlinkungen eintragen
+	//SELECT Scope,Object,Function,ObjectList.ClassID,ObjectDecl.ClassID,ClassType,
+	//ObjectList.ID,ObjectDecl.ID from ObjectList inner join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID;
+	_SQL.assign("Insert Into ObjectLinks (ID_ObjectList,ID_ObjectDecl) \
+		SELECT ObjectList.ID,ObjectDecl.ID from ObjectList inner join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID;");
+	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
+	
+	//jetzt für jede Seq prüfen in welcher andere Seq sie included ist (ID_ObjectListA -> ID_ObjectListB); in temp. Tabelle eintragen
+	SELECT distinct tab1.ID,tab2.ID,
+       tab2.Scope,
+       tab2.ClassID
+  FROM ObjectList as tab1 inner join ObjectList as tab2 on tab1.ClassID==tab2.Scope
+  inner join ObjectDecl on ObjectDecl.ClassID==tab2.ClassID where ClassType=1;
 
+	//...Where ClassType==tCTSeq;	
+	_SQL.assign("Insert Into ObjectLinksTemp (ID_A,ID_B) \
+		SELECT ObjectList.ID,ObjectDecl.ID from ObjectList inner join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID ");
+	_SQL.append("where ClassType==").append(std::to_string((long long)tCTSeq));
+	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
+	
+	// in der temporären Tabelle werden die Seq-Verknüpfungen aufgelöst: 
+	// 1) SELECT tab2.id,tab1.value FROM MyTable as tab1 inner join MyTable as tab2 on tab1.id==tab2.value; ausführen
+	// 2) zurückgelieferte Ergebnisse in Tabelle anfügen
+	// 3) das ganze so lange wiederholen bis Select kein Ergebnis mehr liefert
+	// die Tabelle enthält nun für jede Seq auch Verweise auf indirekt eingebundene Seq
+	_SQLSelect.assign("SELECT tab2.ID_A,tab1.ID_B FROM ObjectLinksTemp as tab1 inner join ObjectLinksTemp as tab2 on tab1.ID_A==tab2.ID_B;");
+	_SQL.assign("Insert Into ObjectLinksTemp (ID_A,ID_B) ");
+	_SQL.append(_SQLSelect);
+	bool _Finished=false;
+	while (!_Finished) {
+		if(ExecuteSimpleQuery(_SQL)!=0) return 1;
+	
+		rc = sqlite3_prepare(db,_SQLSelect.c_str(), -1, &res, 0);       
+		if (rc != SQLITE_OK) {   
+			thePlugin.Log(_SQL.c_str());
+			thePlugin.Log(_T("Failed to fetch data")); 
+			thePlugin.Log(sqlite3_errmsg(db));
+			return 1;
+		}    
+		rc = sqlite3_step(res);  
+		_Finished=true;
+		while (rc == SQLITE_ROW) {	// do we have to run the insert again or are we finished
+			_Finished=false;
+		}
+		sqlite3_finalize(res);
+		
+	}
+	//jetzt für jeden Eintrag in temp. Tabelle die bereits vorhandenen Einträge in ObjectLinks duplizieren 
+	// 1) Insert INTO ObjectLinks (ID_ObjectList,ID_ObjectDecl) SELECT Mytable.ID,ID_ObjectDecl from ObjectLinks inner join MyTable on Mytable.value==ID_ObjectList
+	_SQL.assign("Insert INTO ObjectLinks (ID_ObjectList,ID_ObjectDecl) \
+		SELECT ObjectLinksTemp.ID_A,ObjectLinks.ID_ObjectDecl from ObjectLinks inner join ObjectLinksTemp on ObjectLinksTemp.ID_B==ObjectLinks.ID_ObjectList ");
+	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
+
+	return 0;
+}
+
+// Todo would be nice to run this in parallel thread
+int Model::RebuildObjList() {
+	thePlugin.Log(_T("Scanning SEQ..."));
+	PrepareForUpdate();
 	// add the basic types to Intelisense
 	std::vector<str>::const_iterator _Iter=Model::BASIC_TYPES().begin();
 	for ( ; _Iter != Model::BASIC_TYPES().end( ); _Iter++ ) {
@@ -177,8 +260,8 @@ int Model::RebuildObjList(const tstr*  ProjectPath) {
 	}
 
 	SeqParser _parser(this);	
-	std::vector<char> _vpath = WcharMbcsConverter::tchar2char(ProjectPath->c_str());
-	std::string _path(_vpath.begin(),_vpath.end()-1); // remove 00
+	//??std::vector<char> _vpath = WcharMbcsConverter::tchar2char(ProjectPath->c_str());
+	//??std::string _path(_vpath.begin(),_vpath.end()-1); // remove 00
 	std::string _filepath;	// \subdir\test.seq
 	std::string _file;		// test.seq
 	std::string _currDir;	// \subdir
@@ -191,34 +274,33 @@ int Model::RebuildObjList(const tstr*  ProjectPath) {
 		_currDir= _dirs.back();
 		_dirs.pop_back();
 		thePlugin.Log(_currDir.c_str());
-		dp=opendir((_path +_currDir).c_str());
+		dp=opendir((m_ProjectPath +_currDir).c_str());
 		if(!dp) continue;
 		while ((dirp = readdir( dp ))) {
 			_file = dirp->d_name;
 			_filepath = _currDir + "\\" + _file;
 			// If the file is a directory (or is in some way invalid) we'll skip it 
 			if (_file=="." || _file=="..") continue;
-			if (stat( (_path +_filepath).c_str(), &_filestat )) continue;
+			if (stat( (m_ProjectPath +_filepath).c_str(), &_filestat )) continue;
 			if (S_ISDIR( _filestat.st_mode ))  {
 				_dirs.push_back(_currDir + "\\" + _file);
 				continue;
 			}
 			if (_file.substr(_file.length()-4,4)!=".seq") continue; 
-			_parser.AnalyseFile(false,_path,_filepath);
+			_parser.AnalyseFile(false,m_ProjectPath,_filepath);
 		}
 		closedir( dp );
 	}
 	return 0;
 }
 //after building ObjList we now have to compile each class into ObjDecl
-int Model::RebuildClassDefinition(const tstr*  ProjectPath) {
+int Model::RebuildClassDefinition() {
 	thePlugin.Log(_T("Scanning Classes..."));
-	std::vector<char> _vpath = WcharMbcsConverter::tchar2char(ProjectPath->c_str());  //Todo projectpath as Model-Member
-	std::string _path(_vpath.begin(),_vpath.end()-1); // remove 00
+
 	//find each entry in ObjList that is no linked to ObjDecl
 	char *error=0;
 	SeqParser _parser(this);
-	str _SQL("SELECT ObjectList.ClassID,ObjectList.Time as ID2,ObjectDecl.ClassID as ID1 from ObjectList ");
+	str _SQL("SELECT ObjectList.ClassID as ID2,ObjectDecl.ClassID as ID1 from ObjectList ");
 	_SQL=_SQL+("Left outer join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID where ID1 IS NULL;");
 	str _filepath;
 	sqlite3_stmt *res;
@@ -230,19 +312,28 @@ int Model::RebuildClassDefinition(const tstr*  ProjectPath) {
         return 1;
     }    
     rc = sqlite3_step(res);  
-	time_t ltime; // Todo??
+	time_t ltime; // Todo?? ltime = (time_t)sqlite3_column_int(res, 1);
     while (rc == SQLITE_ROW) {
 		_filepath.assign((const char*)sqlite3_column_text(res, 0));
 		rc = sqlite3_step(res);
-		_parser.AnalyseFile(true,_path,_filepath);
+		_parser.AnalyseFile(true,m_ProjectPath,_filepath);
     }
     sqlite3_finalize(res);
+
+	//clear the old data
+	_SQL.assign("delete from ObjectList where State==0;");
+	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
+	_SQL.assign("delete from ObjectDecl where State==0;");
+	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
+
+	if (CleanupDeadLinks()!=0) return 1;
 	return 0;
 }
 int Model::InitDatabase() {
 	thePlugin.Log(_T("Creating db..."));
 	char *error=0;
-	const char *sqlDropTable = "DROP TABLE ObjectList";
+	//drop all tables; no error if tables already dropped
+	const char *sqlDropTable = "DROP TABLE ObjectList";				//Todo refactor with ExecuteSimpleQuery
 	LastError = sqlite3_exec(db, sqlDropTable, NULL, NULL, &error);
 	if (LastError)
 	{
@@ -258,8 +349,25 @@ int Model::InitDatabase() {
 		thePlugin.Log(sqlite3_errmsg(db) );
 		sqlite3_free(error);
 	}
+	sqlDropTable = "DROP TABLE ObjectLinks";
+	LastError = sqlite3_exec(db, sqlDropTable, NULL, NULL, &error);
+	if (LastError)
+	{
+		thePlugin.Log(_T("Error executing SQLite3 statement: "));
+		thePlugin.Log(sqlite3_errmsg(db) );
+		sqlite3_free(error);
+	}
+	sqlDropTable = "DROP TABLE ObjectLinksTemp";
+	LastError = sqlite3_exec(db, sqlDropTable, NULL, NULL, &error);
+	if (LastError)
+	{
+		thePlugin.Log(_T("Error executing SQLite3 statement: "));
+		thePlugin.Log(sqlite3_errmsg(db) );
+		sqlite3_free(error);
+	}
+	//Create tables
 	const char *sqlCreateTable = "CREATE TABLE ObjectList ("\
-		"ID INTEGER PRIMARY KEY AUTOINCREMENT, Scope TEXT, Object TEXT, ClassID TEXT NOT NULL, State INT, Time INT)";
+		"ID INTEGER PRIMARY KEY AUTOINCREMENT, Scope TEXT, Object TEXT, ClassID TEXT NOT NULL, State INT)";
 	LastError = sqlite3_exec(db, sqlCreateTable, NULL, NULL, &error);
 	if (LastError)
 	{
@@ -269,7 +377,27 @@ int Model::InitDatabase() {
 		return 1;
 	}
 	sqlCreateTable = "CREATE TABLE ObjectDecl ("\
-		"ID INTEGER PRIMARY KEY AUTOINCREMENT, ClassID TEXT NOT NULL, Function TEXT NOT NULL, Params TEXT, Returns TEXT, ClassType INT, State INT)";
+		"ID INTEGER PRIMARY KEY AUTOINCREMENT, ClassID TEXT NOT NULL, Function TEXT NOT NULL, Params TEXT, Returns TEXT, ClassType INT, State INT, Time INT)";
+	LastError = sqlite3_exec(db, sqlCreateTable, NULL, NULL, &error);
+	if (LastError)
+	{
+		thePlugin.Log(_T("Error executing SQLite3 statement: "));
+		thePlugin.Log(sqlite3_errmsg(db));
+		sqlite3_free(error);
+		return 1;
+	}
+	sqlCreateTable = "CREATE TABLE ObjectLinks ("\
+		"ID INTEGER PRIMARY KEY AUTOINCREMENT, ID_ObjectList INT, ID_ObjectDecl INT)";
+	LastError = sqlite3_exec(db, sqlCreateTable, NULL, NULL, &error);
+	if (LastError)
+	{
+		thePlugin.Log(_T("Error executing SQLite3 statement: "));
+		thePlugin.Log(sqlite3_errmsg(db));
+		sqlite3_free(error);
+		return 1;
+	}
+	sqlCreateTable = "CREATE TABLE ObjectLinksTemp ("\
+		"ID_A INT, ID_B INT)";
 	LastError = sqlite3_exec(db, sqlCreateTable, NULL, NULL, &error);
 	if (LastError)
 	{
@@ -281,10 +409,9 @@ int Model::InitDatabase() {
 	thePlugin.Log(_T("db ready"));
 	return 0;
 }
+//insert/update Object
 int Model::UpdateObjList(Obj& theObj) {
 	char *error=0;
-	time_t ltime;
-	time( &ltime );
 	LastError = RefreshObjListID(theObj);
 	if (LastError) return 1;
 	str _SQL("");
@@ -293,12 +420,11 @@ int Model::UpdateObjList(Obj& theObj) {
 			"',Object='"+theObj.Name()+
 			"',ClassID='"+theObj.ClassID()+
 			"',State=1"+
-			",Time="+std::to_string((long long)ltime)+
 			" where ID="+std::to_string((long long)theObj.ID()) );
 	}else {
-		_SQL = ("INSERT INTO ObjectList (Scope , Object , ClassID, State, Time) VALUES('");
+		_SQL = ("INSERT INTO ObjectList (Scope , Object , ClassID, State) VALUES('");
 		_SQL.append(theObj.Scope()).append("', '").append(theObj.Name()).append("', '").append(theObj.ClassID());
-		_SQL.append("',").append("1").append(",").append(std::to_string((long long)ltime));
+		_SQL.append("',").append("1");
 		_SQL.append(");");
 	}
    LastError = sqlite3_exec(db, _SQL.c_str(), NULL, NULL, &error);
@@ -336,9 +462,12 @@ int Model::RefreshObjListID(Obj& theObj) {
     sqlite3_finalize(res);
 	return 0;
 }
+//insert/update ObjectDeclaration
 int Model::UpdateObjDecl(ObjDecl& theObj) {
 	char *error=0;
 	LastError = RefreshObjDeclID(theObj);
+	time_t ltime;
+	time( &ltime );
 	if (LastError) return 1;
 	str _SQL("");
 	if(theObj.ID()>0) {
@@ -348,12 +477,13 @@ int Model::UpdateObjDecl(ObjDecl& theObj) {
 			"',Returns='"+theObj.Returns()+
 			"',ClassType="+std::to_string((long long)theObj.ClassType())+
 			" ,State=1"+
+			" ,Time="+std::to_string((long long)ltime)+
 			" where ID="+std::to_string((long long)theObj.ID()) );
 	}else {
-		_SQL = ("INSERT INTO ObjectDecl (ClassID, Function, Params, Returns, ClassType, State) VALUES('");
+		_SQL = ("INSERT INTO ObjectDecl (ClassID, Function, Params, Returns, ClassType, State, Time) VALUES('");
 		_SQL.append(theObj.ClassID()).append("', '").append(theObj.Function()).append("', '").append(theObj.Params());
 		_SQL.append("', '").append(theObj.Returns()).append("', ").append(std::to_string((long long)theObj.ClassType()));
-		_SQL.append(",1");
+		_SQL.append(",1").append(",").append(std::to_string((long long)ltime));
 		_SQL.append(");");
 	}
    LastError = sqlite3_exec(db, _SQL.c_str(), NULL, NULL, &error);
@@ -389,5 +519,16 @@ int Model::RefreshObjDeclID(ObjDecl& theObj) {
 		theObj.updateID(sqlite3_column_int(res, 0));
     }
     sqlite3_finalize(res);
+	return 0;
+}
+int Model::ExecuteSimpleQuery( str SQL) {
+	char *error=0;
+	LastError = sqlite3_exec(db, SQL.c_str(), NULL, NULL, &error);
+	if (LastError)
+	{
+		thePlugin.Log(_T("Error executing SQLite3 statement: "));
+		thePlugin.Log(sqlite3_errmsg(db) );
+		sqlite3_free(error);
+	}
 	return 0;
 }

@@ -27,6 +27,7 @@ int SeqParser::AnalyseFile(bool IsClassDefinition, std::string BasePath,std::str
 		thePlugin.Log(_T("error reading file"));
 		return 1;
 	}
+	//_filestat.st_mtime
 	if (S_ISDIR( _filestat.st_mode )) {
 		thePlugin.Log(_T("skipped because is directory"));
 		return 1;

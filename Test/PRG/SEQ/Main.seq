@@ -1,4 +1,4 @@
-ï»¿#include test1.seq
+#include test1.seq
 #include subfunctions\Functions.seq	//include from sub-directory
 
 #using "Source\Objects\Calculator\Calculator_Commander.vi" as Calc
@@ -7,7 +7,7 @@
 double fVolt;
 int iX=2
 //string sText2 
-string sText=" fÃ¼r Kommentar // einfÃ¼gen" //that was not a comment
+string sText=" für Kommentar // einfügen" //that was not a comment
 //descr: Grundstellungsfahrt
 function Homing() -> bool bReturn, string sText //another Comment
 {
@@ -18,3 +18,4 @@ function Main()
 {
 	iX=2/3;	
 } 
+ 

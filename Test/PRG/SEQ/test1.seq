@@ -1,5 +1,12 @@
+#using "Source\Objects\Powersupply\N6700B\N6700B_Commander.vi" as N6700B
 
 function Main(double Count) -> bool bReturn, string sText
 {
 	bool bOK=true;
+	N6700B.GetVoltage( ) ->
+	
+}
+
+function Test1() -> bool bOK
+{
 }
