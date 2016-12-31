@@ -1,3 +1,7 @@
+//-> Sin mehrere Funktionen vorhanden die sich nur in den Parametern unterscheiden wird trotzdem nur die letzte Deklaration übernommen da über Funktionsnamen gesucht wird
+// SetVoltage(double fV, double fC)
+// SetVoltage(double fV)
+
 //-> wenn Main.seq test1.seq included, müssen in main.seq auch die using-verweise und Variablen sichtbar sein
 
 //-> brauchen wir Tabellen-Indexe?

@@ -52,6 +52,12 @@ class CNppPIALexer : public CNppPlugin
 		tstr* m_Search; // the phrase to search for (Object/Function)
 		tstr* m_Found;
 		tstr* m_Object;
+		tstr* m_Function; 
+		enum {
+			None=0,
+			Object=1,
+			Function=2
+		} m_State;
 		int m_CurrPos;
 
 		//flags for disabling Intelisense

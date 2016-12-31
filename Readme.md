@@ -21,7 +21,7 @@ ________________________________________________________________________________
 
 ) unter Plugins->NppPIALexer->ControlCenter Project-Pfad eingeben
 
-) Reload Data zum erzeugen der Intelisense drücken
+) Rebuild zum erzeugen der Intelisense drücken
 
 ) log-file wird gespeichert in .../Npp/NppPIALexer.log
 ________________________________________________________________________________________________________________
@@ -55,7 +55,7 @@ Tabelle ObjectLinks
 ID		INT PRIMARY KEY     AUTOINCREMENT
 ID_ObjectList	INT		
 ID_ObjectDecl	INT
-State		INT
+ID_ObjectListRel	INT	
 
 Tabelle ObjectDecl
 ID		INT PRIMARY KEY     AUTOINCREMENT
@@ -75,7 +75,9 @@ Time		INT					<= Zeitstempel als Sekunden seit Mitternacht des 1. Januar 1970
 ) Verknüpfung der Tabellen über:
 SELECT * from ObjectList inner join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID;
 ?? aber Main.seq -> Functions.seq -> StandardObj.seq -> Trace
-SELECT * from ObjectLinks inner join ObjectList on ObjectList.ID==ObjectLinks.ID_ObjectList inner join ObjectDecl on ObjectDecl.ID==ObjectLinks.ID_ObjectDecl;
+SELECT distinct tab1.Scope,tab2.Object,tab2.ClassID,Function from ObjectLinks inner join ObjectList as tab1 on tab1.ID==ObjectLinks.ID_ObjectList inner join ObjectDecl on ObjectDecl.ID==ObjectLinks.ID_ObjectDecl
+inner join ObjectList as tab2 on tab2.ID==ObjectLinks.ID_ObjectListRel order by tab2.Object,Function;
+
 
 z.B. ObjectList
 Scope		Object	ClassID		
@@ -121,6 +123,13 @@ ________________________________________________________________________________
 1) der Lexer erkennt welches Sequenzfile bearbeitet wird 
 2) bei Eingabe von "." oder " " oder "(" oder "->" startet der Lexer; nach 2-3 Zeichen Vorschlagliste einblenden
 	(in Functions.seq eintippen) "Calc.bo"
+   "Calc.boolAnd(bA,"true") -> bOK"
+   nach " ": kann Variable oder Seq-Funktion oder KlassenObjekt sein
+   nach ".": Objekt-Funktion, aber nur wenn erstes Zeichen nichtnumerisch und vorher Klassenobjekt
+   nach "(": Parameterliste, aber nur wenn vorher Objekt-Funktion
+   nach ")": Ende Parameterliste
+   nach "-": 
+   nach ">": Returnlist, aber nur wenn vorher "-" und davor Parameterliste mit ")" abgeschlossen
 3) Nachschlagen: Scope=Functions.seq::CloseDoor	Obj=Calc Search=bo Typ=Class (weil ".")
 	gibt es ein Objekt Calc im Scope Functions.seq::CloseDoor oder Functions.seq?
 	ist es vom Typ Class?

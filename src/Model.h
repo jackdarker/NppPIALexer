@@ -114,10 +114,9 @@ public:
 
 		//gets a list of possible autocompletion candidates for Objects/in-sequence-functions
 		// Scope is the actual SEQ
-		int GetObject(const tstr* BeginsWith, const tstr* Scope,const tstr* Object, tstr* Result );
-		//gets a list of possible autocompletion candidates for object-functions
+		//or gets a list of possible autocompletion candidates for object-functions
 		// Scope is the actual Objectname
-		int GetFunction(const tstr* BeginsWith, const tstr* Scope, const tstr*  Object ,tstr* Result );
+		int GetObject(const tstr* BeginsWith, const tstr* Scope,const tstr* Object, tstr* Result );
 
 		int Export();
 		int UpdateObjList(Obj& theObj );

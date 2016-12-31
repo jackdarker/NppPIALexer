@@ -130,6 +130,7 @@ CNppPIALexer::CNppPIALexer()
 	m_Search = new tstr();
 	m_Found = new tstr();
 	m_Object= new tstr();
+	m_Function= new tstr();
 }
 
 CNppPIALexer::~CNppPIALexer()
@@ -140,6 +141,7 @@ CNppPIALexer::~CNppPIALexer()
 	if(m_Search) delete m_Search;
 	if(m_Found) delete m_Found;
 	if(m_Object) delete m_Object;
+	if(m_Function) delete m_Function;
 	if (m_Log) { 
 		m_Log->close();
 		delete m_Log;
@@ -229,9 +231,8 @@ void CNppPIALexer::OnNppBufferActivated(int ID)
 {
     UpdateFileType();
 	if(ID>-1) {
-		m_nppMsgr.getBufferFullPath(ID,MAX_PATH,tcharbuf);
-		//??Log(_T("Buffer activated"));
-		//Log(tcharbuf);
+		//m_nppMsgr.getBufferFullPath(ID,MAX_PATH,tcharbuf);
+		ResetAutoComplete();
 	}
 }
 void CNppPIALexer::OnNppFileOpened()
@@ -387,8 +388,8 @@ void CNppPIALexer::OnSciCharAdded(const int ch)
 			m_Object->assign(WcharMbcsConverter::char2wcharStr(charbuf));
 			//m_nppMsgr.getCurrentWord(MAX_PATH,prevword); doesnt return correct word?
             break;
-		case _TCH('(') :
-			//??x=sciMsgr.SendSciMsg(SCI_CALLTIPSHOW,(WPARAM)(m_CurrPos),(LPARAM)"1234\n678"); Todo
+		case _TCH('(') : // parameterlist
+			x=sciMsgr.SendSciMsg(SCI_CALLTIPSHOW,(WPARAM)(m_CurrPos),(LPARAM)"1234\n678"); //Todo
 		case _TCH(' ') :
 		case _TCH('\x0D') :
 		case _TCH('\x0A') :
