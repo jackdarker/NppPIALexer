@@ -51,13 +51,15 @@ class CNppPIALexer : public CNppPlugin
 		tstr* m_Scope;	// the actual Scope (Object/File) 
 		tstr* m_Search; // the phrase to search for (Object/Function)
 		tstr* m_Found;
-		tstr* m_Object;
-		tstr* m_Function; 
-		enum {
+		tstr* m_Object; // the actual object
+		tstr* m_Function; // the actual function of the object or seq-function
+		enum {			// in the state searching/entering...
 			None=0,
-			Object=1,
-			Function=2
-		} m_State;
+			Object=1, //objectname or functionname or variablename
+			Function=2, // Function
+			Params=3, //parameters of functioncall
+			Returns=4 //returnlist of functioncall
+		} m_State;  //
 		int m_CurrPos;
 
 		//flags for disabling Intelisense

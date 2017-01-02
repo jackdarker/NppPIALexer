@@ -118,6 +118,11 @@ public:
 		// Scope is the actual Objectname
 		int GetObject(const tstr* BeginsWith, const tstr* Scope,const tstr* Object, tstr* Result );
 
+		//gets the function parameter list
+		int GetParams(const tstr* Scope,const tstr* Object,const tstr* Function, tstr* Result );
+		//gets the function return list
+		int GetReturns(const tstr* Scope,const tstr* Object,const tstr* Function, tstr* Result );
+
 		int Export();
 		int UpdateObjList(Obj& theObj );
 		int UpdateObjDecl(ObjDecl& theObj );

@@ -124,6 +124,75 @@ int Model::GetObject(const tstr* BeginsWith, const tstr* Scope, const tstr* Obje
 	return 0;
 }
 
+int Model::GetParams( const tstr* Scope, const tstr* Object,const tstr* Function,tstr* Result ) {
+	char *error=0;
+	tstr _SQL;
+	// Todo maybe its more efficient to put this into stored procedure?
+	tstr _SQL2(_T(" from ObjectLinks inner join ObjectList as tab1 on tab1.ID==ObjectLinks.ID_ObjectList \
+		  inner join ObjectDecl on ObjectDecl.ID==ObjectLinks.ID_ObjectDecl\
+			inner join ObjectList as tab2 on tab2.ID==ObjectLinks.ID_ObjectListRel "));
+
+	_SQL=_T("SELECT distinct Params")+ _SQL2 + _T("where tab1.Scope=='");
+	_SQL+=(*Scope)+_T("' AND tab2.Object=='")+(*Object)+_T("' AND Function=='")+(*Function)+_T("'")+_T(" order by Params;");
+
+	std::vector<char>_sql=WcharMbcsConverter::wchar2char(_SQL.c_str());
+	sqlite3_stmt *res;
+	int rc = sqlite3_prepare(db,&_sql[0], -1, &res, 0);       
+	if (rc != SQLITE_OK) {      
+		thePlugin.Log(&_sql[0]);
+		thePlugin.Log(_T("Failed to fetch data")); 
+		thePlugin.Log(sqlite3_errmsg(db));
+		return 1;
+	}    
+	str _result("");
+	rc = sqlite3_step(res);  
+	int i=0;
+		
+	while (rc == SQLITE_ROW) {
+		if (!_result.empty()) _result.append("\n");
+		_result.append((const char*)sqlite3_column_text(res, 0));
+		rc = sqlite3_step(res);
+		i=i+1;
+	}
+	sqlite3_finalize(res);
+	Result->assign(WcharMbcsConverter::char2wcharStr(_result.c_str()));
+	return 0;
+}
+int Model::GetReturns( const tstr* Scope, const tstr* Object,const tstr* Function,tstr* Result ) {
+	char *error=0;
+	tstr _SQL;
+	// Todo maybe its more efficient to put this into stored procedure?
+	tstr _SQL2(_T(" from ObjectLinks inner join ObjectList as tab1 on tab1.ID==ObjectLinks.ID_ObjectList \
+		  inner join ObjectDecl on ObjectDecl.ID==ObjectLinks.ID_ObjectDecl\
+			inner join ObjectList as tab2 on tab2.ID==ObjectLinks.ID_ObjectListRel "));
+
+	_SQL=_T("SELECT distinct Returns")+ _SQL2 + _T("where tab1.Scope=='");
+	_SQL+=(*Scope)+_T("' AND tab2.Object=='")+(*Object)+_T("' AND Function=='")+(*Function)+_T("'")+_T(" order by Params;");
+
+	std::vector<char>_sql=WcharMbcsConverter::wchar2char(_SQL.c_str());
+	sqlite3_stmt *res;
+	int rc = sqlite3_prepare(db,&_sql[0], -1, &res, 0);       
+	if (rc != SQLITE_OK) {      
+		thePlugin.Log(&_sql[0]);
+		thePlugin.Log(_T("Failed to fetch data")); 
+		thePlugin.Log(sqlite3_errmsg(db));
+		return 1;
+	}    
+	str _result("");
+	rc = sqlite3_step(res);  
+	int i=0;
+		
+	while (rc == SQLITE_ROW) {
+		if (!_result.empty()) _result.append("\n");
+		_result.append((const char*)sqlite3_column_text(res, 0));
+		rc = sqlite3_step(res);
+		i=i+1;
+	}
+	sqlite3_finalize(res);
+	Result->assign(WcharMbcsConverter::char2wcharStr(_result.c_str()));
+	return 0;
+}
+
 int Model::LoadIntelisense(const tstr*  ProjectPath) {
 	thePlugin.Log(_T("Opening db ..." ));
 	tstr _FullPath;
@@ -139,7 +208,7 @@ int Model::LoadIntelisense(const tstr*  ProjectPath) {
 		HandleDBError();
 		return 1;
 	}
-	LastError = InitDatabase();
+	LastError = InitDatabase();	//Todo only init if not exist or corrupt
 	if (LastError ) {
 		return 1;
 	}
@@ -195,7 +264,7 @@ int Model::CleanupDeadLinks() {
 	_SQLSelect.assign("SELECT distinct tab2.ID_A,tab1.ID_B FROM ObjectLinksTemp as tab1 inner join \
 		ObjectLinksTemp as tab2 on (tab1.ID_A==tab2.ID_B AND tab1.ID_A!=tab1.ID_B AND tab2.ID_A!=tab2.ID_B )\
 		where not exists (SELECT ID_A, ID_B FROM ObjectLinksTemp where ID_A==tab2.ID_A AND ID_B==tab1.ID_B);");
-	_SQL.assign("Insert Into ObjectLinksTemp (ID_A,ID_B) ");
+	_SQL.assign("Insert Into ObjectLinksTemp (ID_A,ID_B) ");  //Todo sub-seq are still listed doubled ?!
 	_SQL.append(_SQLSelect);
 	bool _Finished=false;
 	while (!_Finished) {

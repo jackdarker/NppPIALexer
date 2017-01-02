@@ -37,7 +37,7 @@ int SeqParser::AnalyseFile(bool IsClassDefinition, std::string BasePath,std::str
 		return 1;
 	}
 	if(!m_IsClassDefinition) 
-		m_Model->UpdateObjList(Model::Obj(m_RelFilePath,m_RelFilePath,m_RelFilePath)); //each SEQ includes itself
+		m_Model->UpdateObjList(Model::Obj(m_RelFilePath,"",m_RelFilePath)); //each SEQ includes itself
 
 	std::string buffer;
 	while (std::getline(_filestream, buffer)) { 

@@ -27,16 +27,6 @@ std::vector<wchar_t> wcharbuf;
 bool CNppPIALexer::isNppMacroStarted = false;
 bool CNppPIALexer::isNppWndUnicode = true;
 WNDPROC CNppPIALexer::nppOriginalWndProc = NULL;
-        
-/*
-// from "resource.h" (Notepad++)
-#define ID_MACRO                       20000
-#define ID_MACRO_LIMIT                 20200
-#define IDCMD                          50000
-#define IDC_EDIT_TOGGLEMACRORECORDING  (IDCMD + 5)
-#define MACRO_USER                     (WM_USER + 4000)
-#define WM_MACRODLGRUNMACRO            (MACRO_USER + 02)
-*/
 
 void CNppPIALexer::DockableDlgDemo()
 {
@@ -50,7 +40,7 @@ void CNppPIALexer::DockableDlgDemo()
 		// define the default docking behaviour
 		data.uMask = DWS_DF_CONT_RIGHT;
 
-		data.pszModuleName = thePlugin.getDllFileName();//_goToLine.getPluginFileName();
+		data.pszModuleName = thePlugin.getDllFileName();
 
 		// the dlgDlg should be the index of funcItem where the current function pointer is
 		// in this case is DOCKABLE_DEMO_INDEX
@@ -356,30 +346,26 @@ void CNppPIALexer::ResetAutoComplete() {
 	m_Search->assign(_T(""));
 	m_Found->assign(_T(""));
 	m_Object->assign(_T(""));
+	m_Function->assign(_T(""));
 	m_CurrPos=-1;
 	m_InComment=false;
 	m_InString=false;
 	m_AfterCmd=false;	
 	m_Number=false;	
+	m_State = None;
 }
 int _wordStart;
 void CNppPIALexer::OnSciCharAdded(const int ch)
 {
-    if ( !g_opt.m_bBracketsAutoComplete )
-        return;
-
-    if ( !m_bSupportedFileType )
-        return;
+    if ( !g_opt.m_bBracketsAutoComplete )  return;
+    if ( !m_bSupportedFileType )  return;
 
     CSciMessager sciMsgr(m_nppMsgr.getCurrentScintillaWnd());
 
     int nSelections = (int) sciMsgr.SendSciMsg(SCI_GETSELECTIONS);
-    if ( nSelections > 1 )
-        return; // nothing to do with multiple selections
+    if ( nSelections > 1 ) return; // nothing to do with multiple selections
 	LRESULT x;
-
-	switch ( ch )
-    {
+	switch ( ch ) {
 		case _TCH('.') : // after objectname
 			ResetAutoComplete();	
 			m_CurrPos = sciMsgr.getCurrentPos();
@@ -387,25 +373,63 @@ void CNppPIALexer::OnSciCharAdded(const int ch)
 			sciMsgr.getTextRange(_wordStart,m_CurrPos-1,charbuf);
 			m_Object->assign(WcharMbcsConverter::char2wcharStr(charbuf));
 			//m_nppMsgr.getCurrentWord(MAX_PATH,prevword); doesnt return correct word?
+			m_State=Function;
             break;
 		case _TCH('(') : // parameterlist
-			x=sciMsgr.SendSciMsg(SCI_CALLTIPSHOW,(WPARAM)(m_CurrPos),(LPARAM)"1234\n678"); //Todo
-		case _TCH(' ') :
-		case _TCH('\x0D') :
-		case _TCH('\x0A') :
+			m_CurrPos = sciMsgr.getCurrentPos();
+			_wordStart=sciMsgr.getWordStartPos(m_CurrPos-1,true);
+			sciMsgr.getTextRange(_wordStart,m_CurrPos-1,charbuf);
+			m_Function->assign(WcharMbcsConverter::char2wcharStr(charbuf));
+			m_Model->GetParams(m_File,m_Object,m_Function,m_Found);
+			if(!m_Found->empty()){
+				x=sciMsgr.SendSciMsg(SCI_CALLTIPSHOW,(WPARAM)(m_CurrPos),(LPARAM)&(WcharMbcsConverter::tchar2char(m_Found->c_str()))[0]); //
+			}
+			m_State=Params;
+			break;
+		case _TCH('-') :
+		case _TCH('+') :
+		case _TCH('*') :
+		case _TCH('%') :
+			break;
+
+		case _TCH('/') :
+			break;
+		case _TCH('>') :
+			m_CurrPos = sciMsgr.getCurrentPos();
+			sciMsgr.getTextRange(m_CurrPos-2,m_CurrPos,charbuf);
+			if (charbuf[0]=='-' && charbuf[1]=='>') {  // only after "->"
+				m_State=Returns;
+				m_Model->GetReturns(m_File,m_Object,m_Function,m_Found);
+				if(!m_Found->empty()){
+					x=sciMsgr.SendSciMsg(SCI_CALLTIPSHOW,(WPARAM)(m_CurrPos),(LPARAM)&(WcharMbcsConverter::tchar2char(m_Found->c_str()))[0]); //
+				}
+			}
+			
+			break;
+		case _TCH(',') : // Todo show calltip again
+			break;
+		case _TCH(';') : // Todo end of line
+			break;
+		case _TCH(' ') : // this starts a new word/object
 		case _TCH('\x09') : //tab not transmitted by NPP?
+			break;
+		case _TCH('\x0D') :// this starts a new word/object
+		case _TCH('\x0A') :
             ResetAutoComplete();	
             break;
-		default:
+		default:  //
 			m_CurrPos = sciMsgr.getCurrentPos();
 			_wordStart=sciMsgr.getWordStartPos(m_CurrPos,true);
 			sciMsgr.getTextRange(_wordStart,m_CurrPos,charbuf);
 			m_Search->assign(WcharMbcsConverter::char2wcharStr(charbuf));
-			m_Model->GetObject(m_Search,m_File,m_Object,m_Found);
-			std::vector<char> utf8buf =WcharMbcsConverter::tchar2char(m_Found->c_str());
-			if(utf8buf.size()>1){ //ends always with 0x00 Todo 
+			if (m_State==Params || m_State==Returns) { //should only display Objects or Variables
+				m_Model->GetObject(m_Search,m_File,&tstr(_T("")),m_Found);
+			} else {
+				m_Model->GetObject(m_Search,m_File,m_Object,m_Found);
+			}
+			if(!m_Found->empty()){
 				_wordStart=sciMsgr.getWordStartPos(m_CurrPos-1,true);
-				x=sciMsgr.SendSciMsg(SCI_AUTOCSHOW,(WPARAM)(m_CurrPos-_wordStart),(LPARAM)&utf8buf[0]);
+				x=sciMsgr.SendSciMsg(SCI_AUTOCSHOW,(WPARAM)(m_CurrPos-_wordStart),(LPARAM)&(WcharMbcsConverter::tchar2char(m_Found->c_str()))[0]);
 			}
 			break;
 
