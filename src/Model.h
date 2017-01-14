@@ -100,14 +100,9 @@ public:
 		int LoadIntelisense(const tstr*  ProjectPath) ;
 		//new database is created and filled with parsed data from source, also rebuild ObjList
 		
-
-		//if there is no Database new one is created
-		//parses all SEQ for Obj-definitions and in-sequence-functions of the current working directory
-		//calls RebuildClassDefinition 
-		int RebuildObjList();
-
-		//search for data of classes (declaration of functions)
-		int RebuildClassDefinition();
+		int Rebuild();
+		int Update();
+		
 
 		//setup a projectdatabase for intelisense; if there is one it will be overwritten
 		int InitDatabase() ;
@@ -127,6 +122,13 @@ public:
 		int UpdateObjList(Obj& theObj );
 		int UpdateObjDecl(ObjDecl& theObj );
 	private: 
+		//parses all SEQ for Obj-definitions and in-sequence-functions of the current working directory
+		//calls RebuildClassDefinition 
+		int RebuildObjList();
+
+		//search for data of classes (declaration of functions)
+		int RebuildClassDefinition();
+
 		//Todo ?? removes entrys that dont exist anymore
 		// -> setzt checkedMarker=false in jedem eintrag
 		// -> RebuildIntelisense wird aufgerufen, was checkedMarker=true setzt für jeden Eintrag der bestätigt wird

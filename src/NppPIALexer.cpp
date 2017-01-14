@@ -138,16 +138,20 @@ CNppPIALexer::~CNppPIALexer()
 		m_Log=NULL;
 	}
 }
+
 void CNppPIALexer::Log(const TCHAR* log){
 	m_DockDlg.PrintLog(log);
 	if(!m_Log) return;
-	struct tm today = { 1, 1, 1, 1, 1, 1 };
+	/*struct tm today = { 1, 1, 1, 1, 1, 1 };
 	time_t ltime;
 	time( &ltime );
 	_localtime64_s( &today, &ltime );  
 	TCHAR _Ttime[128];
-	wcsftime( _Ttime, 128, _T("%c   "), &today );
-	*m_Log<<_Ttime<<log<<std::endl;
+	wcsftime( _Ttime, 128, _T("%c"), &today );*/
+	struct _timeb timebuffer;
+    _ftime_s( &timebuffer );
+	*m_Log<<std::to_string((_Longlong)timebuffer.time).c_str()<<
+		"."<<std::to_string((_Longlong)timebuffer.millitm).c_str()<<"s   "<<log<<std::endl;
 
 }
 void CNppPIALexer::Log(const char* log){
@@ -577,12 +581,14 @@ void CNppPIALexer::ReloadData(const tstr*  ProjectPath)
 	m_DockDlg.PrintLog(_T("Loading sucessful"));
 	g_opt.m_LastProject=ProjectPath->c_str();
 	SaveOptions();
-	
-	m_Model->RebuildObjList();
-	m_Model->RebuildClassDefinition();
+}
+void CNppPIALexer::RebuildData()
+{
+	m_Model->Rebuild();
 }
 void CNppPIALexer::UpdateData()
 {
+	m_Model->Update();
 }
 void  CNppPIALexer::ExportIntelisense() {
 	if(!m_Model) return;

@@ -2,3 +2,4 @@
 function CloseDoor(bool Yup) -> bool bReturn
 {
 }
+ C

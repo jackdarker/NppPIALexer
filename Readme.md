@@ -34,7 +34,18 @@ ________________________________________________________________________________
 ) Plugin parst Sequencen nach Funktionsdeklarationen  
 	function kabum(bool x) -> bool,string
 
-) Plugin parst Sequencen nach include
+) Plugin parst Sequencen nach include; es muss berücksichtigt werden das bei include SeqA -> SeqB -> SeqC führt zu impliziten include SeqA -> SeqC
+	A -> B
+	B -> C
+	C -> D
+	C -> E
+	-------------------- ergänzen
+	A -> C	
+	B -> D
+	B -> E
+	-------------------- ergänzen
+	A -> D 
+	A -> E	
 
 ) einbinden der Klassen-Intelisense s.u.
 

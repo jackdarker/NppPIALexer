@@ -66,17 +66,25 @@ BOOL CALLBACK DemoDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam)
 					}
 					return TRUE;
 				}
-				case ID_GOLINE_RELOAD :
+				case ID_GOLINE_BUILD :
 				{
 					TCHAR _Dir[MAX_PATH];
 					DlgItem_GetText(_hSelf,ID_GOLINE_BASEDIR,_Dir);
-					thePlugin.ReloadData(_Dir);
+					thePlugin.RebuildData();
 					//this->DlgItem_SetText(_hSelf,ID_GOLINE_MSG,  thePlugin.getDllFileName());
 					return TRUE;
 				}
 				case ID_GOLINE_UPDATE :
 				{
 					thePlugin.UpdateData();
+					return TRUE;
+				}
+				case ID_GOLINE_LOAD :
+				{
+					TCHAR _Dir[MAX_PATH];
+					DlgItem_GetText(_hSelf,ID_GOLINE_BASEDIR,_Dir);
+					thePlugin.ReloadData(_Dir);
+					//this->DlgItem_SetText(_hSelf,ID_GOLINE_MSG,  thePlugin.getDllFileName());
 					return TRUE;
 				}
 				case ID_GOLINE_EXPORT :

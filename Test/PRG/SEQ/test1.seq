@@ -1,4 +1,4 @@
-#using "Source\Objects\Powersupply\N6700B\N6700B_Commander.vi" as N6700B
+using "Source\Objects\Powersupply\N6700B\N6700B_Commander.vi" as N6700B
 
 string sError
 int iError
@@ -9,7 +9,8 @@ function Main(double Count) -> bool bReturn, string sText
 	N6700B.GetVoltage( ) ->
 	
 }
- N6700B.SetVoltage
+
 function Test1() -> bool bOK
 {
 }
+  

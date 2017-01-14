@@ -75,9 +75,12 @@ int Model::GetObject(const tstr* BeginsWith, const tstr* Scope, const tstr* Obje
 	char *error=0;
 	tstr _SQL;
 	// Todo maybe its more efficient to put this into stored procedure?
-	tstr _SQL2(_T(" from ObjectLinks inner join ObjectList as tab1 on tab1.ID==ObjectLinks.ID_ObjectList \
+	/*tstr _SQL2(_T(" from ObjectLinks inner join ObjectList as tab1 on tab1.ID==ObjectLinks.ID_ObjectList \
 		  inner join ObjectDecl on ObjectDecl.ID==ObjectLinks.ID_ObjectDecl\
-			inner join ObjectList as tab2 on tab2.ID==ObjectLinks.ID_ObjectListRel "));
+			inner join ObjectList as tab2 on tab2.ID==ObjectLinks.ID_ObjectListRel "));*/
+	tstr _SQL2(_T(" from ObjectLinks inner join ObjectList as tab1 on tab1.ID==ObjectLinks.ID_ObjectList \
+		 inner join ObjectList as tab2 on tab2.ID==ObjectLinks.ID_ObjectListRel \
+		 left join ObjectDecl on ObjectDecl.ID==ObjectLinks.ID_ObjectDecl "));
 	if (Object->empty()) {
 		// because output needs to be sorted, the UNION needs to be wrapped in additional SELECT for ordering
 		_SQL=_T("select Col1 From ( ");
@@ -214,6 +217,21 @@ int Model::LoadIntelisense(const tstr*  ProjectPath) {
 	}
 	return 0;
 }	
+
+int Model::Rebuild() {
+	if (PrepareForUpdate()!=0) return 1;
+	if (RebuildObjList()!=0) return 1;
+	if (RebuildClassDefinition()!=0) return 1;
+	if (CleanupDeadLinks()!=0) return 1;
+	return 0;
+}
+int Model::Update() {
+	if (PrepareForUpdate()!=0) return 1;
+	if (RebuildObjList()!=0) return 1;
+	if (CleanupDeadLinks()!=0) return 1;
+	return 0;
+}
+
 // marks every entry that needs to be updated
 int Model::PrepareForUpdate() {
 	str _SQL;
@@ -251,7 +269,7 @@ int Model::CleanupDeadLinks() {
 	//jetzt für jede Seq prüfen in welcher andere Seq sie included ist (ID_ObjectListA -> ID_ObjectListB); in temp. Tabelle eintragen	
 	_SQL.assign("Insert Into ObjectLinksTemp (ID_A,ID_B) \
 		SELECT distinct tab1.ID,tab2.ID FROM ObjectList as tab1 inner join ObjectList as tab2 on tab1.ClassID==tab2.Scope \
-		inner join ObjectDecl on ObjectDecl.ClassID==tab2.ClassID ");
+		left join ObjectDecl on ObjectDecl.ClassID==tab2.ClassID ");
 	//??_SQL.append("where ClassType==").append(std::to_string((long long)tCTSeq));
 	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
 	
@@ -296,9 +314,10 @@ int Model::CleanupDeadLinks() {
 }
 
 // Todo would be nice to run this in parallel thread
+// Todo UI is unresponsive because building blocks UI thread ?
 int Model::RebuildObjList() {
 	thePlugin.Log(_T("Scanning SEQ..."));
-	PrepareForUpdate();
+	
 	// add the basic types to Intelisense
 	std::vector<str>::const_iterator _Iter=Model::BASIC_TYPES().begin();
 	for ( ; _Iter != Model::BASIC_TYPES().end( ); _Iter++ ) {
@@ -345,10 +364,10 @@ int Model::RebuildObjList() {
 int Model::RebuildClassDefinition() {
 	thePlugin.Log(_T("Scanning Classes..."));
 
-	//find each entry in ObjList that is no linked to ObjDecl
+	//find each entry in ObjList that is not linked to ObjDecl
 	char *error=0;
 	SeqParser _parser(this);
-	str _SQL("SELECT ObjectList.ClassID as ID2,ObjectDecl.ClassID as ID1 from ObjectList ");
+	str _SQL("SELECT distinct ObjectList.ClassID as ID2,ObjectDecl.ClassID as ID1 from ObjectList ");
 	_SQL=_SQL+("Left outer join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID where ID1 IS NULL;");
 	str _filepath;
 	sqlite3_stmt *res;
@@ -373,8 +392,7 @@ int Model::RebuildClassDefinition() {
 	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
 	_SQL.assign("delete from ObjectDecl where State==0;");
 	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
-
-	if (CleanupDeadLinks()!=0) return 1;
+	
 	return 0;
 }
 int Model::InitDatabase() {
