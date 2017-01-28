@@ -7,6 +7,7 @@
 #include <TCHAR.h>
 #include <vector>
 #include <stdio.h>
+#include <iomanip>
 #include <ios>
 #include <iostream>
 #include <fstream>

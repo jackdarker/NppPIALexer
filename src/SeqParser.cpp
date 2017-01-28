@@ -19,16 +19,16 @@ int SeqParser::AnalyseFile(bool IsClassDefinition, std::string BasePath,std::str
 	m_DescFilePath.replace(i,4,".seq");
 	//Todo make this really a relative path
 	Path.append(m_BasePath).append(m_DescFilePath);			//??.append("\\").append(m_DescFilePath);
-	thePlugin.Log(m_DescFilePath.c_str());	
+	thePlugin.Log(m_DescFilePath.c_str(),CNppPIALexer::Info);	
 	//check if the Object exists
 	// f.e Source\Objects\Calculator\Calculator_Commander.vi
 	// -> if c:\Projects\test\Source\Objects\Calculator\Calculator_Commander.SEQ exists, open and parse it
 	if (stat( Path.c_str(), &_filestat )) {
-		thePlugin.Log(_T("error reading file"));
+		thePlugin.Log(_T("error reading file"),CNppPIALexer::Error);
 		return 1;
 	}
 	if (S_ISDIR( _filestat.st_mode )) {
-		thePlugin.Log(_T("skipped because is directory"));
+		thePlugin.Log(_T("skipped because is directory"),CNppPIALexer::Debug);
 		return 1;
 	}
 	_filestream.open(Path,std::ios::in);
@@ -41,10 +41,10 @@ int SeqParser::AnalyseFile(bool IsClassDefinition, std::string BasePath,std::str
 	std::string buffer;
 	_Longlong n=0;
 	while (std::getline(_filestream, buffer)) { 
+		//thePlugin.Log(std::to_string((_Longlong)n).c_str(),CNppPIALexer::Debug);
 		ParseLine(buffer);
 		n+=1;
 	}
-	//??thePlugin.Log(str("lines: ").append(std::to_string(n)).c_str());
 	return 0;
 }
 
@@ -54,8 +54,11 @@ int SeqParser::ParseLine(std::string Line) {
 	std::string _A;
 	std::string _B;
 	std::string _C;
+	//thePlugin.Log(_T("RemoveComment"),CNppPIALexer::Debug);
 	Line = SeqParser::RemoveComment(Line);
+	//thePlugin.Log(_T("RemoveSpaces"),CNppPIALexer::Debug);
 	Line = SeqParser::RemoveSpaces(Line); //Todo could cause issue with filepaths containing spaces?
+	//thePlugin.Log(_T("Line start"),CNppPIALexer::Debug);
 	if ((_found=Line.find("using ",_offset),_found != std::string::npos)) {
 		//   #using "Objects\Calculator\Calculator_Commander.vi" as Calc		
 		_offset = _offset+_found+7; // after using "
@@ -75,10 +78,12 @@ int SeqParser::ParseLine(std::string Line) {
 		//    function boolAnd (bool bA, bool bB) ->bool bReturn
 		//or  function boolAnd (bool bA, bool bB)
 		_offset = _offset+_found+9; // after function
-		_foundC = Line.length()-1;
+		
 		if ((_foundC=Line.find("->",_offset),_foundC != std::string::npos)) {
 			_C= Line.substr(_foundC+2);	// after ->	
-		} 
+		} else {
+			_foundC = Line.length()-2;
+		}
 		if ((_foundB=Line.find("(",_offset),_foundB != std::string::npos)) {
 				_B= Line.substr(_foundB+1,_foundC-_foundB-2 ); // in between ( )
 				_A= Line.substr(_offset,_foundB-_offset);
@@ -107,5 +112,6 @@ int SeqParser::ParseLine(std::string Line) {
 			}
 		}
 	}
+	//thePlugin.Log(_T("Line done"),CNppPIALexer::Debug);
 	return 0;
 }

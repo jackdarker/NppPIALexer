@@ -139,8 +139,8 @@ CNppPIALexer::~CNppPIALexer()
 	}
 }
 
-void CNppPIALexer::Log(const TCHAR* log){
-	m_DockDlg.PrintLog(log);
+void CNppPIALexer::Log(const TCHAR* log,EnuLogLevel Level){
+	if (Level<=CNppPIALexer::Info)	m_DockDlg.PrintLog(log);
 	if(!m_Log) return;
 	/*struct tm today = { 1, 1, 1, 1, 1, 1 };
 	time_t ltime;
@@ -150,15 +150,16 @@ void CNppPIALexer::Log(const TCHAR* log){
 	wcsftime( _Ttime, 128, _T("%c"), &today );*/
 	struct _timeb timebuffer;
     _ftime_s( &timebuffer );
+	m_Log->precision(4);
 	*m_Log<<std::to_string((_Longlong)timebuffer.time).c_str()<<
-		"."<<std::to_string((_Longlong)timebuffer.millitm).c_str()<<"s   "<<log<<std::endl;
+		"\t"<<std::to_string(((long double)timebuffer.millitm)/1000).c_str()<<"\t"<<log<<std::endl;
 
 }
-void CNppPIALexer::Log(const char* log){
+void CNppPIALexer::Log(const char* log,EnuLogLevel Level){
 	TCHAR _Tlog[2*MAX_PATH + 1]=_T("");
 	int size_needed = MultiByteToWideChar(CP_UTF8, 0, log, (int)strlen(log), NULL, 0);
 	MultiByteToWideChar(CP_UTF8, 0, log, (int)strlen(log), _Tlog, size_needed);
-	Log(_Tlog);
+	Log(_Tlog,Level);
 }
 FuncItem* CNppPIALexer::nppGetFuncsArray(int* pnbFuncItems)
 {

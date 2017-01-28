@@ -96,8 +96,13 @@ class CNppPIALexer : public CNppPlugin
 		void ExportIntelisense(); //just for debug
         void ReadOptions();
         void SaveOptions();
-		void Log(const TCHAR* log);
-		void Log(const char* log);
+		enum EnuLogLevel{			
+			Error=1,
+			Info=2,
+			Debug=5
+		}; 
+		void Log(const TCHAR* log,EnuLogLevel Level);
+		void Log(const char* log,EnuLogLevel Level);
 		void ReloadData(const tstr*  ProjectPath);
 		void ReloadData(const TCHAR*  ProjectPath);
 		void RebuildData();

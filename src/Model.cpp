@@ -17,8 +17,8 @@ Model::~Model(){
 	//thePlugin.Log(_T("model destructor"));
 }
 void Model::HandleDBError() {
-	thePlugin.Log(_T("Error SQLite3 database"));
-	thePlugin.Log(sqlite3_errmsg(db));
+	thePlugin.Log(_T("Error SQLite3 database"),CNppPIALexer::Error);
+	thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
     sqlite3_close(db);
 	db = NULL;
 }
@@ -29,13 +29,13 @@ int Model::Export() {
 	int rc;
 	rc = sqlite3_prepare(db,_sql, -1, &res, 0);       
 	if (rc != SQLITE_OK) {      
-		thePlugin.Log(_sql);
-		thePlugin.Log(_T("Failed to fetch data")); 
-		thePlugin.Log(sqlite3_errmsg(db));
+		thePlugin.Log(_sql,CNppPIALexer::Error);
+		thePlugin.Log(_T("Failed to fetch data"),CNppPIALexer::Error); 
+		thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
 		return 1;
 	}    
 	rc = sqlite3_step(res);  
-	thePlugin.Log("ID\t\tScope\t\tObject\t\tClassID\t\tState");
+	thePlugin.Log("ID\t\tScope\t\tObject\t\tClassID\t\tState",CNppPIALexer::Debug);
 	while (rc == SQLITE_ROW ) {
 		_result.clear();
 		_result.append((const char*)sqlite3_column_text(res, 0)).append("\t\t");
@@ -43,20 +43,20 @@ int Model::Export() {
 		_result.append((const char*)sqlite3_column_text(res, 2)).append("\t\t");
 		_result.append((const char*)sqlite3_column_text(res, 3)).append("\t\t");
 		_result.append((const char*)sqlite3_column_text(res, 4)).append("\t\t");
-		thePlugin.Log(_result.c_str());
+		thePlugin.Log(_result.c_str(),CNppPIALexer::Debug);
 		rc = sqlite3_step(res);
 	}
 	sqlite3_finalize(res);
 	char _sql2[]="Select ID,ClassID,Function,Params,Returns,ClassType,State From ObjectDecl;";
 	rc = sqlite3_prepare(db,_sql2, -1, &res, 0);       
 	if (rc != SQLITE_OK) {      
-		thePlugin.Log(_sql2);
-		thePlugin.Log(_T("Failed to fetch data")); 
-		thePlugin.Log(sqlite3_errmsg(db));
+		thePlugin.Log(_sql2,CNppPIALexer::Error);
+		thePlugin.Log(_T("Failed to fetch data"),CNppPIALexer::Error); 
+		thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
 		return 1;
 	}    
 	rc = sqlite3_step(res);  
-	thePlugin.Log("ID\t\tClassID\t\tFunction\t\tParams\t\tReturns\t\tClassType\t\tState");
+	thePlugin.Log("ID\t\tClassID\t\tFunction\t\tParams\t\tReturns\t\tClassType\t\tState",CNppPIALexer::Debug);
 	while (rc == SQLITE_ROW ) {
 		_result.clear();
 		_result.append((const char*)sqlite3_column_text(res, 0)).append("\t\t");
@@ -65,7 +65,7 @@ int Model::Export() {
 		_result.append((const char*)sqlite3_column_text(res, 3)).append("\t\t");
 		_result.append((const char*)sqlite3_column_text(res, 4)).append("\t\t");
 		_result.append((const char*)sqlite3_column_text(res, 5)).append("\t\t");
-		thePlugin.Log(_result.c_str());
+		thePlugin.Log(_result.c_str(),CNppPIALexer::Debug);
 		rc = sqlite3_step(res);
 	}
 	sqlite3_finalize(res);
@@ -107,9 +107,9 @@ int Model::GetObject(const tstr* BeginsWith, const tstr* Scope, const tstr* Obje
 	sqlite3_stmt *res;
 	int rc = sqlite3_prepare(db,&_sql[0], -1, &res, 0);       
 	if (rc != SQLITE_OK) {      
-		thePlugin.Log(&_sql[0]);
-		thePlugin.Log(_T("Failed to fetch data")); 
-		thePlugin.Log(sqlite3_errmsg(db));
+		thePlugin.Log(&_sql[0],CNppPIALexer::Error);
+		thePlugin.Log(_T("Failed to fetch data"),CNppPIALexer::Error); 
+		thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
 		return 1;
 	}    
 	str _result("");
@@ -142,9 +142,9 @@ int Model::GetParams( const tstr* Scope, const tstr* Object,const tstr* Function
 	sqlite3_stmt *res;
 	int rc = sqlite3_prepare(db,&_sql[0], -1, &res, 0);       
 	if (rc != SQLITE_OK) {      
-		thePlugin.Log(&_sql[0]);
-		thePlugin.Log(_T("Failed to fetch data")); 
-		thePlugin.Log(sqlite3_errmsg(db));
+		thePlugin.Log(&_sql[0],CNppPIALexer::Error);
+		thePlugin.Log(_T("Failed to fetch data"),CNppPIALexer::Error); 
+		thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
 		return 1;
 	}    
 	str _result("");
@@ -176,9 +176,9 @@ int Model::GetReturns( const tstr* Scope, const tstr* Object,const tstr* Functio
 	sqlite3_stmt *res;
 	int rc = sqlite3_prepare(db,&_sql[0], -1, &res, 0);       
 	if (rc != SQLITE_OK) {      
-		thePlugin.Log(&_sql[0]);
-		thePlugin.Log(_T("Failed to fetch data")); 
-		thePlugin.Log(sqlite3_errmsg(db));
+		thePlugin.Log(&_sql[0],CNppPIALexer::Error);
+		thePlugin.Log(_T("Failed to fetch data"),CNppPIALexer::Error); 
+		thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
 		return 1;
 	}    
 	str _result("");
@@ -197,7 +197,7 @@ int Model::GetReturns( const tstr* Scope, const tstr* Object,const tstr* Functio
 }
 
 int Model::LoadIntelisense(const tstr*  ProjectPath) {
-	thePlugin.Log(_T("Opening db ..." ));
+	thePlugin.Log(_T("Opening db ..." ),CNppPIALexer::Info);
 	tstr _FullPath;
 	m_ProjectPath.assign(WcharMbcsConverter::wchar2charStr(ProjectPath->c_str()));
 	_FullPath.assign(ProjectPath->c_str());
@@ -235,9 +235,11 @@ int Model::Update() {
 // marks every entry that needs to be updated
 int Model::PrepareForUpdate() {
 	str _SQL;
-	_SQL.assign("Update ObjectList Set State=0");
+	_SQL.assign("Update ObjectList Set State=0;");
 	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
-	_SQL.assign("Update ObjectDecl Set State=0");
+	_SQL.assign("Update ObjectDecl Set State=0;");
+	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
+	_SQL.assign("Begin transaction;");  //Rebuild-Functions will call alot inserts and if we dont wrap them into an transaction it will be slow
 	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
 	return 0;
 }
@@ -253,26 +255,27 @@ int Model::CleanupDeadLinks() {
 	int rc;
 	sqlite3_stmt *res;
 	str _SQL,_SQLSelect;
+	thePlugin.Log(_T("Clear old links"),CNppPIALexer::Debug);
 	//clear the old data
 	_SQL.assign("delete from ObjectLinksTemp;");
 	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
 	_SQL.assign("delete from ObjectLinks;");
 	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
-	
+	thePlugin.Log(_T("Create plain links"),CNppPIALexer::Debug);
 	//erstmal die einfachen Verlinkungen eintragen
 	//SELECT Scope,Object,Function,ObjectList.ClassID,ObjectDecl.ClassID,ClassType,
 	//ObjectList.ID,ObjectDecl.ID from ObjectList inner join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID;
 	_SQL.assign("Insert Into ObjectLinks (ID_ObjectList,ID_ObjectDecl, ID_ObjectListRel) \
 		SELECT ObjectList.ID,ObjectDecl.ID,ObjectList.ID from ObjectList inner join ObjectDecl on ObjectList.ClassID==ObjectDecl.ClassID;");
 	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
-	
+	thePlugin.Log(_T("Create Seq Links"),CNppPIALexer::Debug);
 	//jetzt für jede Seq prüfen in welcher andere Seq sie included ist (ID_ObjectListA -> ID_ObjectListB); in temp. Tabelle eintragen	
 	_SQL.assign("Insert Into ObjectLinksTemp (ID_A,ID_B) \
 		SELECT distinct tab1.ID,tab2.ID FROM ObjectList as tab1 inner join ObjectList as tab2 on tab1.ClassID==tab2.Scope \
 		left join ObjectDecl on ObjectDecl.ClassID==tab2.ClassID ");
 	//??_SQL.append("where ClassType==").append(std::to_string((long long)tCTSeq));
 	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
-	
+	thePlugin.Log(_T("Create Sub links"),CNppPIALexer::Debug);
 	// in der temporären Tabelle werden die Seq-Verknüpfungen aufgelöst: 
 	// 1) SELECT tab2.id,tab1.value FROM MyTable as tab1 inner join MyTable as tab2 on tab1.id==tab2.value; ausführen
 	// 2) zurückgelieferte Ergebnisse in Tabelle anfügen
@@ -283,16 +286,19 @@ int Model::CleanupDeadLinks() {
 		ObjectLinksTemp as tab2 on (tab1.ID_A==tab2.ID_B AND tab1.ID_A!=tab1.ID_B AND tab2.ID_A!=tab2.ID_B )\
 		where not exists (SELECT ID_A, ID_B FROM ObjectLinksTemp where ID_A==tab2.ID_A AND ID_B==tab1.ID_B);");
 	_SQL.assign("Insert Into ObjectLinksTemp (ID_A,ID_B) ");  //Todo sub-seq are still listed doubled ?!
+	//Todo this is slow because of the nested Select; use EXCEPT/INTERSECT instead??
 	_SQL.append(_SQLSelect);
 	bool _Finished=false;
+	int n=0;
 	while (!_Finished) {
+		n+=1;
+		//thePlugin.Log(std::to_string((_Longlong)n).c_str(),CNppPIALexer::Debug);
 		if(ExecuteSimpleQuery(_SQL)!=0) return 1;
-	
 		rc = sqlite3_prepare(db,_SQLSelect.c_str(), -1, &res, 0);       
 		if (rc != SQLITE_OK) {   
-			thePlugin.Log(_SQL.c_str());
-			thePlugin.Log(_T("Failed to fetch data")); 
-			thePlugin.Log(sqlite3_errmsg(db));
+			thePlugin.Log(_SQL.c_str(),CNppPIALexer::Error);
+			thePlugin.Log(_T("Failed to fetch data"),CNppPIALexer::Error); 
+			thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
 			return 1;
 		}    
 		rc = sqlite3_step(res);  
@@ -304,19 +310,22 @@ int Model::CleanupDeadLinks() {
 		sqlite3_finalize(res);
 		
 	}
+	thePlugin.Log(_T("Cleanup Sub links"),CNppPIALexer::Debug);
 	//jetzt für jeden Eintrag in temp. Tabelle die bereits vorhandenen Einträge in ObjectLinks duplizieren 
 	// 1) Insert INTO ObjectLinks (ID_ObjectList,ID_ObjectDecl) SELECT Mytable.ID,ID_ObjectDecl from ObjectLinks inner join MyTable on Mytable.value==ID_ObjectList
 	_SQL.assign("Insert INTO ObjectLinks (ID_ObjectList,ID_ObjectDecl, ID_ObjectListRel) \
 		SELECT ObjectLinksTemp.ID_A,ObjectLinks.ID_ObjectDecl,ObjectLinksTemp.ID_B from ObjectLinks inner join ObjectLinksTemp on ObjectLinksTemp.ID_B==ObjectLinks.ID_ObjectList ");
 	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
-
+	thePlugin.Log(_T("Cleanup finished"),CNppPIALexer::Debug);
+	_SQL.assign("Commit transaction;"); //finish Rebuild-Transaction
+	if(ExecuteSimpleQuery(_SQL)!=0) return 1;
 	return 0;
 }
 
 // Todo would be nice to run this in parallel thread
 // Todo UI is unresponsive because building blocks UI thread ?
 int Model::RebuildObjList() {
-	thePlugin.Log(_T("Scanning SEQ..."));
+	thePlugin.Log(_T("Scanning SEQ..."),CNppPIALexer::Info);
 	
 	// add the basic types to Intelisense
 	std::vector<str>::const_iterator _Iter=Model::BASIC_TYPES().begin();
@@ -340,7 +349,7 @@ int Model::RebuildObjList() {
 	while (_dirs.size()>0) {
 		_currDir= _dirs.back();
 		_dirs.pop_back();
-		thePlugin.Log(_currDir.c_str());
+		thePlugin.Log(_currDir.c_str(),CNppPIALexer::Debug);
 		dp=opendir((m_ProjectPath +_currDir).c_str());
 		if(!dp) continue;
 		while ((dirp = readdir( dp ))) {
@@ -362,7 +371,7 @@ int Model::RebuildObjList() {
 }
 //after building ObjList we now have to compile each class into ObjDecl
 int Model::RebuildClassDefinition() {
-	thePlugin.Log(_T("Scanning Classes..."));
+	thePlugin.Log(_T("Scanning Classes..."),CNppPIALexer::Info);
 
 	//find each entry in ObjList that is not linked to ObjDecl
 	char *error=0;
@@ -373,9 +382,9 @@ int Model::RebuildClassDefinition() {
 	sqlite3_stmt *res;
 	int rc = sqlite3_prepare(db,_SQL.c_str(), -1, &res, 0);       
     if (rc != SQLITE_OK) {   
-		thePlugin.Log(_SQL.c_str());
-		thePlugin.Log(_T("Failed to fetch data")); 
-		thePlugin.Log(sqlite3_errmsg(db));
+		thePlugin.Log(_SQL.c_str(),CNppPIALexer::Error);
+		thePlugin.Log(_T("Failed to fetch data"),CNppPIALexer::Error); 
+		thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
         return 1;
     }    
     rc = sqlite3_step(res);  
@@ -396,49 +405,51 @@ int Model::RebuildClassDefinition() {
 	return 0;
 }
 int Model::InitDatabase() {
-	thePlugin.Log(_T("Creating db..."));
+	thePlugin.Log(_T("Creating db..."),CNppPIALexer::Info);
 	char *error=0;
 	//drop all tables; no error if tables already dropped
-	const char *sqlDropTable = "DROP TABLE ObjectList";				//Todo refactor with ExecuteSimpleQuery
+	const char *sqlDropTable = "DROP TABLE IF EXISTS ObjectList";				//Todo refactor with ExecuteSimpleQuery
 	LastError = sqlite3_exec(db, sqlDropTable, NULL, NULL, &error);
 	if (LastError)
 	{
-		thePlugin.Log(_T("Error executing SQLite3 statement: "));
-		thePlugin.Log(sqlite3_errmsg(db) );
+		thePlugin.Log(_T("Error executing SQLite3 statement: "),CNppPIALexer::Error);
+		thePlugin.Log(sqlite3_errmsg(db) ,CNppPIALexer::Error);
 		sqlite3_free(error);
 	}
-	sqlDropTable = "DROP TABLE ObjectDecl";
+	sqlDropTable = "DROP TABLE IF EXISTS ObjectDecl";
 	LastError = sqlite3_exec(db, sqlDropTable, NULL, NULL, &error);
 	if (LastError)
 	{
-		thePlugin.Log(_T("Error executing SQLite3 statement: "));
-		thePlugin.Log(sqlite3_errmsg(db) );
+		thePlugin.Log(_T("Error executing SQLite3 statement: "),CNppPIALexer::Error);
+		thePlugin.Log(sqlite3_errmsg(db) ,CNppPIALexer::Error);
 		sqlite3_free(error);
 	}
-	sqlDropTable = "DROP TABLE ObjectLinks";
+	sqlDropTable = "DROP TABLE IF EXISTS ObjectLinks";
 	LastError = sqlite3_exec(db, sqlDropTable, NULL, NULL, &error);
 	if (LastError)
 	{
-		thePlugin.Log(_T("Error executing SQLite3 statement: "));
-		thePlugin.Log(sqlite3_errmsg(db) );
+		thePlugin.Log(_T("Error executing SQLite3 statement: "),CNppPIALexer::Error);
+		thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error );
 		sqlite3_free(error);
 	}
-	sqlDropTable = "DROP TABLE ObjectLinksTemp";
+	sqlDropTable = "DROP TABLE IF EXISTS ObjectLinksTemp";
 	LastError = sqlite3_exec(db, sqlDropTable, NULL, NULL, &error);
 	if (LastError)
 	{
-		thePlugin.Log(_T("Error executing SQLite3 statement: "));
-		thePlugin.Log(sqlite3_errmsg(db) );
+		thePlugin.Log(_T("Error executing SQLite3 statement: "),CNppPIALexer::Error);
+		thePlugin.Log(sqlite3_errmsg(db) ,CNppPIALexer::Error);
 		sqlite3_free(error);
 	}
+
+
 	//Create tables
 	const char *sqlCreateTable = "CREATE TABLE ObjectList ("\
 		"ID INTEGER PRIMARY KEY AUTOINCREMENT,File TEXT, Scope TEXT, Object TEXT, ClassID TEXT NOT NULL, State INT)";
 	LastError = sqlite3_exec(db, sqlCreateTable, NULL, NULL, &error);
 	if (LastError)
 	{
-		thePlugin.Log(_T("Error executing SQLite3 statement: "));
-		thePlugin.Log(sqlite3_errmsg(db));
+		thePlugin.Log(_T("Error executing SQLite3 statement: "),CNppPIALexer::Error);
+		thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
 		sqlite3_free(error);
 		return 1;
 	}
@@ -447,8 +458,8 @@ int Model::InitDatabase() {
 	LastError = sqlite3_exec(db, sqlCreateTable, NULL, NULL, &error);
 	if (LastError)
 	{
-		thePlugin.Log(_T("Error executing SQLite3 statement: "));
-		thePlugin.Log(sqlite3_errmsg(db));
+		thePlugin.Log(_T("Error executing SQLite3 statement: "),CNppPIALexer::Error);
+		thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
 		sqlite3_free(error);
 		return 1;
 	}
@@ -457,30 +468,40 @@ int Model::InitDatabase() {
 	LastError = sqlite3_exec(db, sqlCreateTable, NULL, NULL, &error);
 	if (LastError)
 	{
-		thePlugin.Log(_T("Error executing SQLite3 statement: "));
-		thePlugin.Log(sqlite3_errmsg(db));
+		thePlugin.Log(_T("Error executing SQLite3 statement: "),CNppPIALexer::Error);
+		thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
 		sqlite3_free(error);
 		return 1;
 	}
-	sqlCreateTable = "CREATE TABLE ObjectLinksTemp ("\
-		"ID_A INT, ID_B INT)";
+	sqlCreateTable = "CREATE TABLE ObjectLinksTemp (ID_A INT, ID_B INT)";
 	LastError = sqlite3_exec(db, sqlCreateTable, NULL, NULL, &error);
 	if (LastError)
 	{
-		thePlugin.Log(_T("Error executing SQLite3 statement: "));
-		thePlugin.Log(sqlite3_errmsg(db));
+		thePlugin.Log(_T("Error executing SQLite3 statement: "),CNppPIALexer::Error);
+		thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
 		sqlite3_free(error);
 		return 1;
 	}
-	thePlugin.Log(_T("db ready"));
+	sqlCreateTable = "CREATE INDEX i1 ON ObjectLinksTemp (ID_A,ID_B);";
+	LastError = sqlite3_exec(db, sqlCreateTable, NULL, NULL, &error);
+	if (LastError)
+	{
+		thePlugin.Log(_T("Error executing SQLite3 statement: "),CNppPIALexer::Error);
+		thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
+		sqlite3_free(error);
+		return 1;
+	}
+	thePlugin.Log(_T("db ready"),CNppPIALexer::Info);
 	return 0;
 }
 //insert/update Object
 int Model::UpdateObjList(Obj& theObj) {
 	char *error=0;
+	//thePlugin.Log(_T("RefreshObjListID"),CNppPIALexer::Debug);
 	LastError = RefreshObjListID(theObj);
 	if (LastError) return 1;
 	str _SQL("");
+	//thePlugin.Log(_T("Insert ObjectList"),CNppPIALexer::Debug);
 	if(theObj.ID()>0) {
 		_SQL= ("Update ObjectList Set Scope='" +theObj.Scope() +
 			"',Object='"+theObj.Name()+
@@ -496,14 +517,15 @@ int Model::UpdateObjList(Obj& theObj) {
    LastError = sqlite3_exec(db, _SQL.c_str(), NULL, NULL, &error);
    if (LastError)
    {
-	   thePlugin.Log(_SQL.c_str());
-      thePlugin.Log(_T("Error executing SQLite3 statement: "));
-	  thePlugin.Log(sqlite3_errmsg(db));
+	   thePlugin.Log(_SQL.c_str(),CNppPIALexer::Error);
+      thePlugin.Log(_T("Error executing SQLite3 statement: "),CNppPIALexer::Error);
+	  thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
       sqlite3_free(error);
 	  return 1;
    }
+   //thePlugin.Log(_T("RefreshObjListID again"),CNppPIALexer::Debug);
    LastError = RefreshObjListID(theObj);	//get Ids after insert
-
+   //thePlugin.Log(_T("RefreshObjListID done"),CNppPIALexer::Debug);
 	return 0;
 }
 //fetch the primary key for the dataset or set to invalid
@@ -515,9 +537,9 @@ int Model::RefreshObjListID(Obj& theObj) {
 	sqlite3_stmt *res;
 	int rc = sqlite3_prepare(db,_SQL.c_str(), -1, &res, 0);       
     if (rc != SQLITE_OK) {   
-		thePlugin.Log(_SQL.c_str());
-		thePlugin.Log(_T("Failed to fetch data")); 
-		thePlugin.Log(sqlite3_errmsg(db));
+		thePlugin.Log(_SQL.c_str(),CNppPIALexer::Error);
+		thePlugin.Log(_T("Failed to fetch data"),CNppPIALexer::Error); 
+		thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
         return 1;
     }    
 	theObj.updateID(0);
@@ -531,11 +553,13 @@ int Model::RefreshObjListID(Obj& theObj) {
 //insert/update ObjectDeclaration
 int Model::UpdateObjDecl(ObjDecl& theObj) {
 	char *error=0;
+	//thePlugin.Log(_T("RefreshObjDeclID"),CNppPIALexer::Debug);
 	LastError = RefreshObjDeclID(theObj);
 	time_t ltime;
 	time( &ltime );
 	if (LastError) return 1;
 	str _SQL("");
+	//thePlugin.Log(_T("InsertObjectDecl"),CNppPIALexer::Debug);
 	if(theObj.ID()>0) {
 		_SQL= ("Update ObjectDecl Set ClassID='" +theObj.ClassID() +
 			"',Function='"+theObj.Function()+
@@ -555,14 +579,15 @@ int Model::UpdateObjDecl(ObjDecl& theObj) {
    LastError = sqlite3_exec(db, _SQL.c_str(), NULL, NULL, &error);
    if (LastError)
    {
-	   thePlugin.Log(_SQL.c_str());
-      thePlugin.Log(_T("Error executing SQLite3 statement: "));
-	  thePlugin.Log(sqlite3_errmsg(db));
+	  thePlugin.Log(_SQL.c_str(),CNppPIALexer::Error);
+      thePlugin.Log(_T("Error executing SQLite3 statement: "),CNppPIALexer::Error);
+	  thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
       sqlite3_free(error);
 	  return 1;
    }
+   //thePlugin.Log(_T("RefreshObjDeclID again"),CNppPIALexer::Debug);
    LastError = RefreshObjDeclID(theObj);	//get Ids after insert
-
+   //thePlugin.Log(_T("RefreshObjDeclID done"),CNppPIALexer::Debug);
 	return 0;
 }
 //fetch the primary key for the dataset or set to invalid
@@ -574,9 +599,9 @@ int Model::RefreshObjDeclID(ObjDecl& theObj) {
 	sqlite3_stmt *res;
 	int rc = sqlite3_prepare(db,_SQL.c_str(), -1, &res, 0);       
     if (rc != SQLITE_OK) {   
-		thePlugin.Log(_SQL.c_str());
-		thePlugin.Log(_T("Failed to fetch data")); 
-		thePlugin.Log(sqlite3_errmsg(db));
+		thePlugin.Log(_SQL.c_str(),CNppPIALexer::Error);
+		thePlugin.Log(_T("Failed to fetch data"),CNppPIALexer::Error); 
+		thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error);
         return 1;
     }    
 	theObj.updateID(0);
@@ -592,8 +617,8 @@ int Model::ExecuteSimpleQuery( str SQL) {
 	LastError = sqlite3_exec(db, SQL.c_str(), NULL, NULL, &error);
 	if (LastError)
 	{
-		thePlugin.Log(_T("Error executing SQLite3 statement: "));
-		thePlugin.Log(sqlite3_errmsg(db) );
+		thePlugin.Log(_T("Error executing SQLite3 statement: "),CNppPIALexer::Error);
+		thePlugin.Log(sqlite3_errmsg(db),CNppPIALexer::Error );
 		sqlite3_free(error);
 		return 1;
 	}
